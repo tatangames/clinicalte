@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * MARCA
+     * DATOS GENERALES DE 1 FILA
      */
     public function up(): void
     {
-        Schema::create('marca', function (Blueprint $table) {
+        Schema::create('informacion_general', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre', 100);
+            $table->string('nombre', 100)->nullable();
         });
     }
 
@@ -22,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('marca');
+        Schema::dropIfExists('informacion_general');
     }
 };

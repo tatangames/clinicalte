@@ -7,14 +7,13 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * RUBRO - CODIGOS
+     * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('rubro', function (Blueprint $table) {
+        Schema::create('tipo_paciente', function (Blueprint $table) {
             $table->id();
-            $table->string('codigo', 100);
-            $table->string('nombre', 800);
+            $table->string('nombre', 300);
         });
     }
 
@@ -23,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('rubro');
+        Schema::dropIfExists('tipo_paciente');
     }
 };

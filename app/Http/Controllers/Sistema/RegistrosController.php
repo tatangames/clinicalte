@@ -597,7 +597,7 @@ class RegistrosController extends Controller
                 <h1 style='font-size:16px; margin:0; color:#003366; text-transform:uppercase;'>
                     ALCALDÍA MUNICIPAL DE SANTA ANA NORTE</h1>
                 <h1 style='font-size:16px; margin:4px 0 0; color:#003366; text-transform:uppercase;'>
-                    UNIDAD DE SEGURIDAD Y SALUD OCUPACIONAL.</h1>
+                    UNIDAD DE CLÍNICA DE TAHUILAPA.</h1>
             </td>
             <td style='width:15%;'></td>
         </tr>

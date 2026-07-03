@@ -5,6 +5,7 @@
         <th>Rol</th>
         <th>Usuario</th>
         <th>Opciones</th>
+        <th style="width: 10%">Activo</th>
     </tr>
     </thead>
     <tbody>
@@ -14,6 +15,13 @@
             <td>{{ $dato->nombre }}</td>
             <td>{{ $dato->roles->implode('name', ', ') }}</td>
             <td>{{ $dato->usuario }}</td>
+            <td>
+                @if($dato->activo)
+                    <span class="badge badge-success">Sí</span>
+                @else
+                    <span class="badge badge-danger">No</span>
+                @endif
+            </td>
 
             <td>
                 <button type="button" class="btn btn-primary btn-xs" onclick="verInformacion({{ $dato->id }})">

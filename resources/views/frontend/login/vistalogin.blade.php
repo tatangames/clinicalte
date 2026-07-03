@@ -4,7 +4,7 @@
 @include('backend.urlglobal')
 
 <head>
-    <title>SEGURIDAD Y SALUD OCUPACIONAL</title>
+    <title>CLÍNICA DE TAHUILAPA</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ asset('css/login/bootstrap.min.css') }}">
@@ -117,7 +117,7 @@
 
 
                         <!-- TÍTULO  -->
-                        <h4 class="login-title">SEGURIDAD Y SALUD OCUPACIONAL</h4>
+                        <h4 class="login-title">CLÍNICA DE TAHUILAPA</h4>
                         <form class="login-form">
                             <div>
                                 <label class="font-500">Usuario</label>

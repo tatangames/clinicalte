@@ -324,47 +324,9 @@ return [
             ],
         ],
 
-        [
-            'text' => 'Materiales',
-            'icon' => 'far fa-circle',
-            'route' => 'admin.materiales.index',
-            'can'     => 'sidebar.inventario',
-        ],
-        [
-            'text' => 'Entradas',
-            'icon' => 'far fa-circle',
-            'route' => 'admin.entrada.registro.index',
-            'can'     => 'sidebar.inventario',
-        ],
-        [
-            'text' => 'Salidas',
-            'icon' => 'far fa-circle',
-            'route' => 'admin.salidas.registro.index',
-            'can'     => 'sidebar.inventario',
-        ],
 
-        [
-            'text'    => 'Empleados',
-            'icon'    => 'fas fa-pen-alt',
-            'can'     => 'sidebar.inventario',
-            'submenu' => [
-                [
-                    'text' => 'Unidad Empleado',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.unidadempleado.index',
-                ],
-                [
-                    'text' => 'Empleados',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.empleados.index',
-                ],
-                [
-                    'text' => 'Cargos',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.cargo.index',
-                ],
-            ],
-        ],
+
+
 
         [
             'text'    => 'Configuración',
@@ -372,74 +334,9 @@ return [
             'can'     => 'sidebar.inventario',
             'submenu' => [
                 [
-                    'text' => 'Rubros',
+                    'text' => 'Tipo Paciente',
                     'icon' => 'far fa-circle',
-                    'route' => 'admin.rubro.index',
-                ],
-                [
-                    'text' => 'Cuentas',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.cuenta.index',
-                ],
-                [
-                    'text' => 'Objeto Específico',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.objetoespecifico.index',
-                ],
-                [
-                    'text' => 'Unidades Medida',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.unidadmedida.index',
-                ],
-                [
-                    'text' => 'Marca',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.marca.index',
-                ],
-                [
-                    'text' => 'Talla',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.talla.index',
-                ],
-                [
-                    'text' => 'Color',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.color.index',
-                ],
-                [
-                    'text' => 'Normativa',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.normativa.index',
-                ],
-                [
-                    'text' => 'Proveedores',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.proveedor.index',
-                ],
-                [
-                    'text' => 'Jefe Firma',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.jefefirma.index',
-                ],
-
-            ],
-        ],
-
-        [
-            'text'    => 'Historial',
-            'icon'    => 'fas fa-pen-alt',
-            'can'     => 'sidebar.inventario',
-            'submenu' => [
-                [
-                    'text' => 'Historial Entradas',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.historial.entradas.index',
-                ],
-
-                [
-                    'text' => 'Historial Salidas',
-                    'icon' => 'far fa-circle',
-                    'route' => 'admin.historial.salidas.index',
+                    'route' => 'admin.tipopaciente.index',
                 ],
 
 
@@ -449,12 +346,9 @@ return [
 
 
 
-        [
-            'text' => 'Reportes',
-            'icon' => 'far fa-circle',
-            'route' => 'admin.reportes.index',
-            'can'     => 'sidebar.inventario',
-        ],
+
+
+
 
 
 

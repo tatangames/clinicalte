@@ -34,6 +34,7 @@ class PermisoController extends Controller
         $u->nombre = $request->nombre;
         $u->usuario = $request->usuario;
         $u->password = bcrypt($request->password);
+        $u->activo = true;
 
         if ($u->save()) {
             $role = Role::findById($request->rol, 'admin');
@@ -71,14 +72,14 @@ class PermisoController extends Controller
             }
 
             $usuario = Usuario::find($request->id);
-            $usuario->nombre = $request->nombre;
-            $usuario->usuario = $request->usuario;
+            $usuario->nombre   = $request->nombre;
+            $usuario->usuario  = $request->usuario;
+            $usuario->activo   = $request->activo;
 
-            if($request->password != null){
+            if($request->password != null && $request->password != ''){
                 $usuario->password = bcrypt($request->password);
             }
 
-            // Buscar el rol con el guard correcto y sincronizar
             $role = Role::findById($request->rol, 'admin');
             $usuario->syncRoles($role);
 

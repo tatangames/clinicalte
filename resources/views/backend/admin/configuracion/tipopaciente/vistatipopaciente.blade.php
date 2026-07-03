@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Normativa')
+@section('title', 'Tipo Paciente')
 
 @section('content_header')
-    <h1>Normativa</h1>
+    <h1>Tipo Paciente</h1>
 @stop
 
 
@@ -96,7 +96,7 @@
 
                                     <div class="form-group">
                                         <label>Nombre <span style="color: red">*</span> </label>
-                                        <input type="text" maxlength="100" class="form-control" id="nombre-nuevo" autocomplete="off">
+                                        <input type="text" maxlength="150" class="form-control" id="nombre-nuevo" autocomplete="off">
                                     </div>
 
                                 </div>
@@ -135,7 +135,7 @@
 
                                     <div class="form-group">
                                         <label>Nombre <span style="color: red">*</span></label>
-                                        <input type="text" maxlength="100" class="form-control" id="nombre-editar" autocomplete="off">
+                                        <input type="text" maxlength="150" class="form-control" id="nombre-editar" autocomplete="off">
                                     </div>
 
                                 </div>
@@ -162,7 +162,7 @@
 
         <script>
             $(function () {
-                const ruta = "{{ url('/admin/normativa/tabla/index') }}";
+                const ruta = "{{ url('/admin/tipopaciente/tabla/index') }}";
 
                 function initDataTable() {
                     // Si ya hay instancia, destrúyela antes de re-crear
@@ -224,7 +224,7 @@
     <script>
 
         function recargar(){
-            var ruta = "{{ url('/admin/normativa/tabla/index') }}";
+            var ruta = "{{ url('/admin/tipopaciente/tabla/index') }}";
             $('#tablaDatatable').load(ruta);
         }
 
@@ -245,7 +245,7 @@
             var formData = new FormData();
             formData.append('nombre', nombre);
 
-            axios.post(urlAdmin+'/admin/normativa/nuevo', formData, {
+            axios.post(urlAdmin+'/admin/tipopaciente/nuevo', formData, {
             })
                 .then((response) => {
                     closeLoading();
@@ -268,7 +268,7 @@
             openLoading();
             document.getElementById("formulario-editar").reset();
 
-            axios.post(urlAdmin+'/admin/normativa/informacion',{
+            axios.post(urlAdmin+'/admin/tipopaciente/informacion',{
                 'id': id
             })
                 .then((response) => {
@@ -302,7 +302,7 @@
             formData.append('id', id);
             formData.append('nombre', nombre);
 
-            axios.post(urlAdmin+'/admin/normativa/editar', formData, {
+            axios.post(urlAdmin+'/admin/tipopaciente/editar', formData, {
             })
                 .then((response) => {
                     closeLoading();

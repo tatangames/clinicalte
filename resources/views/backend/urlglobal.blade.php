@@ -1,4 +1,4 @@
-<!-- URL GLOBAL PETICIONES POST          /obradebanco.com       -->
+<!-- URL GLOBAL PETICIONES POST         /CLINICA.COM       -->
 <script type="text/javascript">
     const urlAdmin = "{{ url('/')  }}"
 </script>

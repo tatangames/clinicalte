@@ -24,6 +24,6 @@ class UsuariosSeeder extends Seeder
             'nombre' => 'Inventario',
             'usuario' => 'inventario',
             'password' => bcrypt('1234'),
-        ])->assignRole('inventario');
+        ])->assignRole('archivo');
     }
 }

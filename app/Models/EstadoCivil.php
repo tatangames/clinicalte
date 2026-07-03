@@ -5,10 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Color extends Model
+class EstadoCivil extends Model
 {
     use HasFactory;
-
-    protected $table = 'color';
+    protected $table = 'estado_civil';
     public $timestamps = false;
 }

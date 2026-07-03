@@ -18,17 +18,29 @@ class RolesSeeder extends Seeder
         // Administrador
         $roleAdmin = Role::create(['name' => 'admin', 'guard_name' => 'admin']);
 
-        // Inventario
-        $roleInventario = Role::create(['name' => 'inventario', 'guard_name' => 'admin']);
+        // Archivo
+        $roleArchivo = Role::create(['name' => 'archivo', 'guard_name' => 'admin']);
+
+        // Enfermeria
+        $roleEnfermeria = Role::create(['name' => 'enfermeria', 'guard_name' => 'admin']);
+
+        // Doctora
+        $roleDoctora = Role::create(['name' => 'doctora', 'guard_name' => 'admin']);
+
+        // Farmacia
+        $roleFarmacia = Role::create(['name' => 'farmacia', 'guard_name' => 'admin']);
 
 
         // solo para administrador
         Permission::create(['name' => 'sidebar.roles.y.permisos', 'description' => 'sidebar seccion roles y permisos'])->syncRoles($roleAdmin);
-        Permission::create(['name' => 'sidebar.inventario', 'description' => 'contenedor de catalogo'])->syncRoles($roleInventario);
 
+        Permission::create(['name' => 'sidebar.archivo', 'description' => 'contenedor de archivo'])->syncRoles($roleArchivo);
 
+        Permission::create(['name' => 'sidebar.enfermeria', 'description' => 'contenedor de enfermeria'])->syncRoles($roleEnfermeria);
 
+        Permission::create(['name' => 'sidebar.doctora', 'description' => 'contenedor de doctora'])->syncRoles($roleDoctora);
 
+        Permission::create(['name' => 'sidebar.farmacia', 'description' => 'contenedor de farmacia'])->syncRoles($roleFarmacia);
 
 
     }

@@ -5,7 +5,7 @@
 @section('content_header')
     <h1>Usuarios</h1>
 @stop
-{{-- Activa plugins que necesitas --}}
+
 @section('plugins.Datatables', true)
 @section('plugins.DatatablesPlugins', true)
 @section('plugins.Sweetalert2', true)
@@ -15,16 +15,13 @@
 @section('content_top_nav_right')
     <link href="{{ asset('css/toastr.min.css') }}" type="text/css" rel="stylesheet" />
 
-
-
     <li class="nav-item dropdown">
         <a href="#" class="nav-link" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
             <i class="fas fa-cogs"></i>
             <span class="d-none d-md-inline">
-            {{ Auth::guard('admin')->user()->nombre }}
-        </span>
+                {{ Auth::guard('admin')->user()->nombre }}
+            </span>
         </a>
-
         <div class="dropdown-menu dropdown-menu-right">
             <a href="{{ route('admin.perfil') }}" class="dropdown-item">
                 <i class="fas fa-user mr-2"></i>
@@ -36,7 +33,6 @@
     <li class="nav-item">
         <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
             @csrf
-
             <button type="submit" class="nav-link btn btn-link border-0 bg-transparent">
                 <i class="fas fa-sign-out-alt"></i>
                 <span class="d-none d-md-inline">Cerrar Sesión</span>
@@ -74,6 +70,7 @@
             </div>
         </section>
 
+        {{-- MODAL NUEVO --}}
         <div class="modal fade" id="modalAgregar">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -107,13 +104,11 @@
                                         <div class="form-group">
                                             <label style="color:#191818">Rol</label>
                                             <br>
-                                            <div>
-                                                <select class="form-control" id="rol-nuevo">
-                                                    @foreach($roles as $key => $value)
-                                                        <option value="{{ $key }}">{{ $value }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
+                                            <select class="form-control" id="rol-nuevo">
+                                                @foreach($roles as $key => $value)
+                                                    <option value="{{ $key }}">{{ $value }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
 
                                     </div>
@@ -129,6 +124,7 @@
             </div>
         </div>
 
+        {{-- MODAL EDITAR --}}
         <div class="modal fade" id="modalEditar">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -147,10 +143,8 @@
                                         <div class="form-group">
                                             <label style="color:#191818">Rol</label>
                                             <br>
-                                            <div>
-                                                <select class="form-control" id="rol-editar">
-                                                </select>
-                                            </div>
+                                            <select class="form-control" id="rol-editar">
+                                            </select>
                                         </div>
 
                                         <div class="form-group">
@@ -166,7 +160,15 @@
 
                                         <div class="form-group">
                                             <label>Contraseña</label>
-                                            <input type="text" maxlength="16" autocomplete="off" class="form-control" id="password-editar" placeholder="Contraseña">
+                                            <input type="text" maxlength="16" autocomplete="off" class="form-control" id="password-editar" placeholder="Dejar vacío para no cambiar">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Estado</label>
+                                            <div class="custom-control custom-switch">
+                                                <input type="checkbox" class="custom-control-input" id="activo-editar">
+                                                <label class="custom-control-label" for="activo-editar">Activo</label>
+                                            </div>
                                         </div>
 
                                     </div>
@@ -181,6 +183,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 @stop
 
@@ -188,8 +191,6 @@
     <script src="{{ asset('js/toastr.min.js') }}" type="text/javascript"></script>
     <script src="{{ asset('js/axios.min.js') }}" type="text/javascript"></script>
     <script src="{{ asset('js/alertaPersonalizada.js') }}"></script>
-
-
     <script src="{{ asset('js/theme.js') }}"></script>
 
     <script>
@@ -197,12 +198,10 @@
             const ruta = "{{ url('/admin/permisos/tabla') }}";
 
             function initDataTable() {
-                // Si ya hay instancia, destrúyela antes de re-crear
                 if ($.fn.DataTable.isDataTable('#tabla')) {
                     $('#tabla').DataTable().destroy();
                 }
 
-                // Inicializa
                 $('#tabla').DataTable({
                     paging: true,
                     lengthChange: true,
@@ -231,28 +230,23 @@
                         "<'row align-items-center'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>"
                 });
 
-                // Estilitos
                 $('#tabla_length select').addClass('form-control form-control-sm');
                 $('#tabla_filter input').addClass('form-control form-control-sm').css('display','inline-block');
             }
 
             function cargarTabla() {
                 $('#tablaDatatable').load(ruta, function() {
-                    // AQUI debe existir exactamente un <table id="tabla"> en la parcial
                     initDataTable();
                 });
             }
 
-            // Primera carga
             cargarTabla();
 
-            // Exponer recarga para tus flujos (crear/editar)
             window.recargar = function () {
                 cargarTabla();
             };
         });
     </script>
-
 
     <script>
 
@@ -262,47 +256,39 @@
         }
 
         function nuevoUsuario(){
-
-            var nombre = document.getElementById('nombre-nuevo').value;
-            var usuario = document.getElementById('usuario-nuevo').value;
+            var nombre   = document.getElementById('nombre-nuevo').value;
+            var usuario  = document.getElementById('usuario-nuevo').value;
             var password = document.getElementById('password-nuevo').value;
-            var idrol = document.getElementById('rol-nuevo').value;
+            var idrol    = document.getElementById('rol-nuevo').value;
 
             if(nombre === ''){
                 toastr.error('Nombre es requerido');
                 return;
             }
-
             if(nombre.length > 50){
                 toastr.error('Máximo 50 caracteres para Nombre');
                 return;
             }
-
             if(usuario === ''){
                 toastr.error('Usuario es requerido');
                 return;
             }
-
             if(usuario.length > 50){
                 toastr.error('Máximo 50 caracteres para Usuario');
                 return;
             }
-
             if(password === ''){
                 toastr.error('Contraseña es requerido');
                 return;
             }
-
             if(password.length < 4){
                 toastr.error('Mínimo 4 caracteres para contraseña');
                 return;
             }
-
             if(password.length > 16){
                 toastr.error('Máximo 16 caracteres para contraseña');
                 return;
             }
-
             if(idrol === ''){
                 toastr.error('Rol es requerido');
                 return;
@@ -310,30 +296,26 @@
 
             openLoading();
             var formData = new FormData();
-            formData.append('nombre', nombre);
-            formData.append('usuario', usuario);
+            formData.append('nombre',   nombre);
+            formData.append('usuario',  usuario);
             formData.append('password', password);
-            formData.append('rol', idrol);
+            formData.append('rol',      idrol);
 
-            axios.post(urlAdmin+'/admin/permisos/nuevo-usuario', formData, {
-            })
+            axios.post(urlAdmin+'/admin/permisos/nuevo-usuario', formData)
                 .then((response) => {
-                    closeLoading()
-
-                    if (response.data.success === 1) {
+                    closeLoading();
+                    if(response.data.success === 1){
                         toastr.error('Nombre Usuario ya existe');
-                    }
-                    else if(response.data.success === 2){
+                    } else if(response.data.success === 2){
                         toastr.success('Agregado');
                         $('#modalAgregar').modal('hide');
                         recargar();
-                    }
-                    else {
+                    } else {
                         toastr.error('Error al guardar');
                     }
                 })
                 .catch((error) => {
-                    closeLoading()
+                    closeLoading();
                     toastr.error('Error al guardar');
                 });
         }
@@ -342,9 +324,7 @@
             openLoading();
             document.getElementById("formulario-editar").reset();
 
-            axios.post(urlAdmin+'/admin/permisos/info-usuario',{
-                'id': id
-            })
+            axios.post(urlAdmin+'/admin/permisos/info-usuario', { 'id': id })
                 .then((response) => {
                     closeLoading();
 
@@ -353,91 +333,82 @@
                         $('#id-editar').val(response.data.info.id);
                         $('#nombre-editar').val(response.data.info.nombre);
                         $('#usuario-editar').val(response.data.info.usuario);
+                        $('#activo-editar').prop('checked', response.data.info.activo == 1);
 
                         document.getElementById("rol-editar").options.length = 0;
-
-                        $.each(response.data.roles, function( key, val ){
-
+                        $.each(response.data.roles, function(key, val){
                             if(response.data.idrol[0] == key){
-                                $('#rol-editar').append('<option value="' +key +'" selected="selected">'+val+'</option>');
-                            }else{
-                                $('#rol-editar').append('<option value="' +key +'">'+val+'</option>');
+                                $('#rol-editar').append('<option value="'+key+'" selected="selected">'+val+'</option>');
+                            } else {
+                                $('#rol-editar').append('<option value="'+key+'">'+val+'</option>');
                             }
                         });
 
-                    }else{
-                        toastr.error('Información no encontrado.');
+                    } else {
+                        toastr.error('Información no encontrada.');
                     }
                 })
                 .catch((error) => {
-                    closeLoading()
+                    closeLoading();
                     console.log(error);
-                    toastr.error('Información no encontrado..');
+                    toastr.error('Información no encontrada.');
                 });
         }
 
         function actualizar(){
-            var id = document.getElementById('id-editar').value;
-            var nombre = document.getElementById('nombre-editar').value;
-            var usuario = document.getElementById('usuario-editar').value;
+            var id       = document.getElementById('id-editar').value;
+            var nombre   = document.getElementById('nombre-editar').value;
+            var usuario  = document.getElementById('usuario-editar').value;
             var password = document.getElementById('password-editar').value;
-            var idrol = document.getElementById('rol-editar').value;
-
+            var idrol    = document.getElementById('rol-editar').value;
+            var activo   = document.getElementById('activo-editar').checked ? 1 : 0;
 
             if(nombre === ''){
                 toastr.error('Nombre es requerido');
                 return;
             }
-
             if(nombre.length > 50){
                 toastr.error('Máximo 50 caracteres para Nombre');
                 return;
             }
-
             if(usuario === ''){
                 toastr.error('Usuario es requerido');
                 return;
             }
-
             if(usuario.length > 50){
                 toastr.error('Máximo 50 caracteres para Usuario');
                 return;
             }
-
             if(password.length > 0){
                 if(password.length < 4){
                     toastr.error('Mínimo 4 caracteres para contraseña');
                     return;
                 }
-
                 if(password.length > 16){
                     toastr.error('Máximo 16 caracteres para contraseña');
                     return;
                 }
             }
 
-            openLoading()
+            openLoading();
             var formData = new FormData();
-            formData.append('id', id);
-            formData.append('nombre', nombre);
-            formData.append('usuario', usuario);
+            formData.append('id',       id);
+            formData.append('nombre',   nombre);
+            formData.append('usuario',  usuario);
             formData.append('password', password);
-            formData.append('rol', idrol);
+            formData.append('rol',      idrol);
+            formData.append('activo',   activo);
 
-            axios.post(urlAdmin+'/admin/permisos/editar-usuario', formData, {
-            })
+            axios.post(urlAdmin+'/admin/permisos/editar-usuario', formData)
                 .then((response) => {
-                    closeLoading()
-
-                    if (response.data.success === 1) {
+                    closeLoading();
+                    if(response.data.success === 1){
                         toastr.error('El Usuario ya existe');
-                    }
-                    else if(response.data.success === 2){
+                    } else if(response.data.success === 2){
                         toastr.success('Actualizado');
                         $('#modalEditar').modal('hide');
                         recargar();
-                    }
-                    else {
+                    } else {
                         toastr.error('Error al actualizar');
                     }
                 })
@@ -453,28 +424,4 @@
         }
 
     </script>
-
-
-
-
-
 @endsection
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
