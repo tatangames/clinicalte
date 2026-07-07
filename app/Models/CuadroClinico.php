@@ -5,13 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class EstadoCivil extends Model
+class CuadroClinico extends Model
 {
     use HasFactory;
-    protected $table = 'estado_civil';
+    protected $table = 'cuadro_clinico';
     public $timestamps = false;
 
     protected $fillable = [
-        'nombre',
+        'id_consulta',
+        'id_diagnostico',
+        'id_usuario',
+        'descripcion'
     ];
 }

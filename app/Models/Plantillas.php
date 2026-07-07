@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class EstadoCivil extends Model
+class Plantillas extends Model
 {
     use HasFactory;
-    protected $table = 'estado_civil';
+    protected $table = 'plantillas';
     public $timestamps = false;
 
     protected $fillable = [
         'nombre',
+        'descripcion',
     ];
 }

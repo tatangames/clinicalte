@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('profesion', function (Blueprint $table) {
+        Schema::create('antecedentes_medicos', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre', 300);
+            $table->bigInteger('id_tipo')->unsigned();
+            $table->string('nombre', 200);
+
+            $table->foreign('id_tipo')->references('id')->on('tipo_antecedente');
         });
     }
 
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('profesion');
+        Schema::dropIfExists('antecedentes_medicos');
     }
 };

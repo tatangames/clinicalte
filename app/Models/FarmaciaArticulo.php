@@ -5,13 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class EstadoCivil extends Model
+class FarmaciaArticulo extends Model
 {
     use HasFactory;
-    protected $table = 'estado_civil';
+    protected $table = 'farmacia_articulo';
     public $timestamps = false;
 
     protected $fillable = [
+        'id_linea',
+        'id_sublinea',
         'nombre',
+        'codigo_articulo',
+        'existencia_minima'
     ];
 }

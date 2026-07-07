@@ -10,4 +10,8 @@ class TipoPaciente extends Model
     use HasFactory;
     protected $table = 'tipo_paciente';
     public $timestamps = false;
+
+    protected $fillable = [
+    'nombre',
+    ];
 }

@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class EstadoCivil extends Model
+class AntecedentesMedicos extends Model
 {
     use HasFactory;
-    protected $table = 'estado_civil';
+    protected $table = 'antecedentes_medicos';
     public $timestamps = false;
 
     protected $fillable = [
-        'nombre',
+        'id_tipo',
+        'nombre'
     ];
+
 }

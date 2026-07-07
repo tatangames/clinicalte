@@ -331,13 +331,13 @@ return [
         [
             'text'    => 'Configuración',
             'icon'    => 'fas fa-pen-alt',
-            'can'     => 'sidebar.inventario',
             'submenu' => [
                 [
                     'text' => 'Tipo Paciente',
                     'icon' => 'far fa-circle',
                     'route' => 'admin.tipopaciente.index',
                 ],
+
 
 
 

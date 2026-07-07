@@ -7,13 +7,17 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * CUENTA - CODIGOS
      */
     public function up(): void
     {
-        Schema::create('profesion', function (Blueprint $table) {
+        Schema::create('cuenta', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_rubro')->unsigned();
+            $table->string('codigo',100);
             $table->string('nombre', 300);
+
+            $table->foreign('id_rubro')->references('id')->on('rubro');
         });
     }
 
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('profesion');
+        Schema::dropIfExists('cuenta');
     }
 };
