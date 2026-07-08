@@ -62,6 +62,48 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('/admin/tipopaciente/informacion', [ConfiguracionController::class, 'informacionTipoPaciente']);
     Route::post('/admin/tipopaciente/editar', [ConfiguracionController::class, 'editarTipoPaciente']);
 
+    // --- PROFESION ---
+    Route::get('/admin/profesion/index', [ConfiguracionController::class,'indexProfesion'])->name('admin.profesion.index');
+    Route::get('/admin/profesion/tabla/index', [ConfiguracionController::class,'tablaProfesion']);
+    Route::post('/admin/profesion/nuevo', [ConfiguracionController::class, 'nuevaProfesion']);
+    Route::post('/admin/profesion/informacion', [ConfiguracionController::class, 'informacionProfesion']);
+    Route::post('/admin/profesion/editar', [ConfiguracionController::class, 'editarProfesion']);
+
+    // --- ESTADO CIVIL ---
+    Route::get('/admin/estadocivil/index', [ConfiguracionController::class,'indexEstadoCivil'])->name('admin.estadocivil.index');
+    Route::get('/admin/estadocivil/tabla/index', [ConfiguracionController::class,'tablaEstadoCivil']);
+    Route::post('/admin/estadocivil/nuevo', [ConfiguracionController::class, 'nuevaEstadoCivil']);
+    Route::post('/admin/estadocivil/informacion', [ConfiguracionController::class, 'informacionEstadoCivil']);
+    Route::post('/admin/estadocivil/editar', [ConfiguracionController::class, 'editarEstadoCivil']);
+
+    // --- ESTADO CIVIL ---
+    Route::get('/admin/estadocivil/index', [ConfiguracionController::class,'indexEstadoCivil'])->name('admin.estadocivil.index');
+    Route::get('/admin/estadocivil/tabla/index', [ConfiguracionController::class,'tablaEstadoCivil']);
+    Route::post('/admin/estadocivil/nuevo', [ConfiguracionController::class, 'nuevaEstadoCivil']);
+    Route::post('/admin/estadocivil/informacion', [ConfiguracionController::class, 'informacionEstadoCivil']);
+    Route::post('/admin/estadocivil/editar', [ConfiguracionController::class, 'editarEstadoCivil']);
+
+    // --- ANTECEDENTES MEDICOS ---
+    Route::get('/admin/antecedentesmedicos/index', [ConfiguracionController::class,'indexAntecedentesMedicos'])->name('admin.antecedentesmedicos.index');
+    Route::get('/admin/antecedentesmedicos/tabla/index', [ConfiguracionController::class,'tablaAntecedentesMedicos']);
+    Route::post('/admin/antecedentesmedicos/nuevo', [ConfiguracionController::class, 'nuevaAntecedentesMedicos']);
+    Route::post('/admin/antecedentesmedicos/informacion', [ConfiguracionController::class, 'informacionAntecedentesMedicos']);
+    Route::post('/admin/antecedentesmedicos/editar', [ConfiguracionController::class, 'editarAntecedentesMedicos']);
+
+    // --- MOTIVO CONSULTA ---
+    Route::get('/admin/motivoconsulta/index', [ConfiguracionController::class,'indexMotivoConsulta'])->name('admin.motivoconsulta.index');
+    Route::get('/admin/motivoconsulta/tabla/index', [ConfiguracionController::class,'tablaMotivoConsulta']);
+    Route::post('/admin/motivoconsulta/nuevo', [ConfiguracionController::class, 'nuevaMotivoConsulta']);
+    Route::post('/admin/motivoconsulta/informacion', [ConfiguracionController::class, 'informacionMotivoConsulta']);
+    Route::post('/admin/motivoconsulta/editar', [ConfiguracionController::class, 'editarMotivoConsulta']);
+
+    // --- TIPO DOCUMENTO ---
+    Route::get('/admin/tipodocumento/index', [ConfiguracionController::class,'indexTipoDocumento'])->name('admin.tipodocumento.index');
+    Route::get('/admin/tipodocumento/tabla/index', [ConfiguracionController::class,'tablaTipoDocumento']);
+    Route::post('/admin/tipodocumento/nuevo', [ConfiguracionController::class, 'nuevaTipoDocumento']);
+    Route::post('/admin/tipodocumento/informacion', [ConfiguracionController::class, 'informacionTipoDocumento']);
+    Route::post('/admin/tipodocumento/editar', [ConfiguracionController::class, 'editarTipoDocumento']);
+
 
 
 

@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Unidad de Medida')
+@section('title', 'Motivo Consulta')
 
 @section('content_header')
-    <h1>Unidad de Medida</h1>
+    <h1>Motivo Consulta</h1>
 @stop
 
 
@@ -54,7 +54,7 @@
             <div class="col-sm-6">
                 <button type="button" onclick="modalAgregar()" class="btn btn-dark btn-sm">
                     <i class="fas fa-plus-square"></i>
-                    Nueva Unidad Medida
+                    Nuevo Registro
                 </button>
             </div>
 
@@ -65,7 +65,7 @@
         <div class="container-fluid">
             <div class="card card-blue">
                 <div class="card-header">
-                    <h3 class="card-title">Listado de Medidas</h3>
+                    <h3 class="card-title">Listado</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -83,7 +83,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Nueva Unidad de Medida</h4>
+                    <h4 class="modal-title">Nuevo Registro</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -95,8 +95,8 @@
                                 <div class="col-md-12">
 
                                     <div class="form-group">
-                                        <label>Medida <span style="color: red">*</span> </label>
-                                        <input type="text" maxlength="100" class="form-control" id="medida-nuevo" autocomplete="off">
+                                        <label>Nombre <span style="color: red">*</span> </label>
+                                        <input type="text" maxlength="150" class="form-control" id="nombre-nuevo" autocomplete="off">
                                     </div>
 
                                 </div>
@@ -117,7 +117,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Editar Unidad Medida</h4>
+                    <h4 class="modal-title">Editar</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -134,8 +134,8 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label>Medida <span style="color: red">*</span></label>
-                                        <input type="text" maxlength="100" class="form-control" id="medida-editar" autocomplete="off">
+                                        <label>Nombre <span style="color: red">*</span></label>
+                                        <input type="text" maxlength="150" class="form-control" id="nombre-editar" autocomplete="off">
                                     </div>
 
                                 </div>
@@ -162,7 +162,7 @@
 
         <script>
             $(function () {
-                const ruta = "{{ url('/admin/unidadmedida/tabla/index') }}";
+                const ruta = "{{ url('/admin/motivoconsulta/tabla/index') }}";
 
                 function initDataTable() {
                     // Si ya hay instancia, destrúyela antes de re-crear
@@ -224,7 +224,7 @@
     <script>
 
         function recargar(){
-            var ruta = "{{ url('/admin/unidadmedida/tabla/index') }}";
+            var ruta = "{{ url('/admin/motivoconsulta/tabla/index') }}";
             $('#tablaDatatable').load(ruta);
         }
 
@@ -234,23 +234,18 @@
         }
 
         function nuevo(){
-            var medida = document.getElementById('medida-nuevo').value;
+            var nombre = document.getElementById('nombre-nuevo').value;
 
-            if(medida === ''){
-                toastr.error('Medida es requerido');
-                return;
-            }
-
-            if(medida.length > 100){
-                toastr.error('Medida máximo 100 caracteres');
+            if(nombre === ''){
+                toastr.error('Nombre es requerido');
                 return;
             }
 
             openLoading();
             var formData = new FormData();
-            formData.append('medida', medida);
+            formData.append('nombre', nombre);
 
-            axios.post(urlAdmin+'/admin/unidadmedida/nuevo', formData, {
+            axios.post(urlAdmin+'/admin/motivoconsulta/nuevo', formData, {
             })
                 .then((response) => {
                     closeLoading();
@@ -273,15 +268,15 @@
             openLoading();
             document.getElementById("formulario-editar").reset();
 
-            axios.post(urlAdmin+'/admin/unidadmedida/informacion',{
+            axios.post(urlAdmin+'/admin/motivoconsulta/informacion',{
                 'id': id
             })
                 .then((response) => {
                     closeLoading();
                     if(response.data.success === 1){
                         $('#modalEditar').modal('show');
-                        $('#id-editar').val(response.data.medida.id);
-                        $('#medida-editar').val(response.data.medida.nombre);
+                        $('#id-editar').val(response.data.info.id);
+                        $('#nombre-editar').val(response.data.info.nombre);
 
                     }else{
                         toastr.error('Información no encontrada');
@@ -295,28 +290,22 @@
 
         function editar(){
             var id = document.getElementById('id-editar').value;
-            var medida = document.getElementById('medida-editar').value;
+            var nombre = document.getElementById('nombre-editar').value;
 
-            if(medida === ''){
-                toastr.error('Medida es requerido');
-                return;
-            }
-
-            if(medida.length > 100){
-                toastr.error('Medida máximo 100 caracteres');
+            if(nombre === ''){
+                toastr.error('Nombre es requerido');
                 return;
             }
 
             openLoading();
             var formData = new FormData();
             formData.append('id', id);
-            formData.append('medida', medida);
+            formData.append('nombre', nombre);
 
-            axios.post(urlAdmin+'/admin/unidadmedida/editar', formData, {
+            axios.post(urlAdmin+'/admin/motivoconsulta/editar', formData, {
             })
                 .then((response) => {
                     closeLoading();
-
                     if(response.data.success === 1){
                         toastr.success('Actualizado correctamente');
                         $('#modalEditar').modal('hide');
@@ -325,16 +314,12 @@
                     else {
                         toastr.error('Error al actualizar');
                     }
-
                 })
                 .catch((error) => {
                     toastr.error('Error al actualizar');
                     closeLoading();
                 });
         }
-
-
     </script>
-
 
 @endsection

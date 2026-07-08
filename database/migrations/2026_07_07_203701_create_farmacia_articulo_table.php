@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('id_linea')->unsigned();
             $table->bigInteger('id_sublinea')->unsigned()->nullable();
+            $table->bigInteger('id_objespecifico')->unsigned()->nullable();
 
             $table->string('nombre', 300);
             $table->string('codigo_articulo', 300)->nullable();
@@ -23,6 +24,7 @@ return new class extends Migration
 
             $table->foreign('id_linea')->references('id')->on('linea');
             $table->foreign('id_sublinea')->references('id')->on('sub_linea');
+            $table->foreign('id_objespecifico')->references('id')->on('objeto_especifico');
         });
     }
 

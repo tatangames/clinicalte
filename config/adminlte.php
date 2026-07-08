@@ -337,7 +337,31 @@ return [
                     'icon' => 'far fa-circle',
                     'route' => 'admin.tipopaciente.index',
                 ],
-
+                [
+                    'text' => 'Profesión',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.profesion.index',
+                ],
+                [
+                    'text' => 'Estado Civil',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.estadocivil.index',
+                ],
+                [
+                    'text' => 'Antecedentes Medico',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.antecedentesmedicos.index',
+                ],
+                [
+                    'text' => 'Motivo Consulta',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.motivoconsulta.index',
+                ],
+                [
+                    'text' => 'Tipo Documento',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.tipodocumento.index',
+                ],
 
 
 

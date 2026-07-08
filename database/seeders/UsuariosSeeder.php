@@ -15,15 +15,48 @@ class UsuariosSeeder extends Seeder
     public function run()
     {
         Usuario::create([
-            'nombre' => 'Admin',
-            'usuario' => 'admin',
+            'nombre' => 'Jonathan',
+            'usuario' => 'jonathan',
             'password' => bcrypt('1234'),
+            'activo' => 1,
         ])->assignRole('admin');
 
         Usuario::create([
-            'nombre' => 'Inventario',
-            'usuario' => 'inventario',
+            'nombre' => 'Giovany',
+            'usuario' => 'giovany',
             'password' => bcrypt('1234'),
+            'activo' => 1,
+        ])->assignRole('admin');
+
+
+        Usuario::create([
+            'nombre' => 'Archivo',
+            'usuario' => 'archivo',
+            'password' => bcrypt('1234'),
+            'activo' => 1,
         ])->assignRole('archivo');
+
+        Usuario::create([
+            'nombre' => 'Enfermeria',
+            'usuario' => 'enfermeria',
+            'password' => bcrypt('1234'),
+            'activo' => 1,
+        ])->assignRole('enfermeria');
+
+
+        Usuario::create([
+            'nombre' => 'Doctora',
+            'usuario' => 'doctora',
+            'password' => bcrypt('1234'),
+            'activo' => 1,
+        ])->assignRole('doctora');
+
+
+        Usuario::create([
+            'nombre' => 'Farmacia',
+            'usuario' => 'farmacia',
+            'password' => bcrypt('1234'),
+            'activo' => 1,
+        ])->assignRole('farmacia');
     }
 }
