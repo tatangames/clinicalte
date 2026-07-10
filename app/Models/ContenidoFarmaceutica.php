@@ -15,4 +15,9 @@ class ContenidoFarmaceutica extends Model
         'id_tipo_farmaceutica',
         'nombre'
     ];
+
+    public function tipoFarmaceutica()
+    {
+        return $this->belongsTo(TipoFarmaceutica::class, 'id_tipo_farmaceutica');
+    }
 }

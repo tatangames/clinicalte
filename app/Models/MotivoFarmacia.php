@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class MotivoFarmacia extends Model
 {
     use HasFactory;
-    protected $table = 'tipo_paciente';
+    protected $table = 'motivo_farmacia';
     public $timestamps = false;
 
     protected $fillable = [

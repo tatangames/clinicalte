@@ -362,6 +362,41 @@ return [
                     'icon' => 'far fa-circle',
                     'route' => 'admin.tipodocumento.index',
                 ],
+                [
+                    'text' => 'Tipo Diagnóstico',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.tipodiagnostico.index',
+                ],
+                [
+                    'text' => 'Línea',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.linea.index',
+                ],
+                [
+                    'text' => 'Sub Línea',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.sublinea.index',
+                ],
+                [
+                    'text' => 'Proveedor',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.proveedor.index',
+                ],
+                [
+                    'text' => 'Tipo Medicamento',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.contenidofarmaceutica.index',
+                ],
+                [
+                    'text' => 'Motivo Farmacia',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.motivofarmacia.index',
+                ],
+                [
+                    'text' => 'Vía Receta',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.viareceta.index',
+                ],
 
 
 

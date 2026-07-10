@@ -23,4 +23,9 @@ class Proveedores extends Model
         'telefono_celular',
         'correo'
     ];
+
+    public function tipoProveedor()
+    {
+        return $this->belongsTo(TipoProveedor::class, 'id_tipo_proveedor');
+    }
 }

@@ -104,6 +104,54 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('/admin/tipodocumento/informacion', [ConfiguracionController::class, 'informacionTipoDocumento']);
     Route::post('/admin/tipodocumento/editar', [ConfiguracionController::class, 'editarTipoDocumento']);
 
+    // --- TIPO DIAGNOSTICO ---
+    Route::get('/admin/tipodiagnostico/index', [ConfiguracionController::class,'indexTipoDiagnostico'])->name('admin.tipodiagnostico.index');
+    Route::get('/admin/tipodiagnostico/tabla/index', [ConfiguracionController::class,'tablaTipoDiagnostico']);
+    Route::post('/admin/tipodiagnostico/nuevo', [ConfiguracionController::class, 'nuevaTipoDiagnostico']);
+    Route::post('/admin/tipodiagnostico/informacion', [ConfiguracionController::class, 'informacionTipoDiagnostico']);
+    Route::post('/admin/tipodiagnostico/editar', [ConfiguracionController::class, 'editarTipoDiagnostico']);
+
+    // --- LINEA ---
+    Route::get('/admin/linea/index', [ConfiguracionController::class,'indexLinea'])->name('admin.linea.index');
+    Route::get('/admin/linea/tabla/index', [ConfiguracionController::class,'tablaLinea']);
+    Route::post('/admin/linea/nuevo', [ConfiguracionController::class, 'nuevaLinea']);
+    Route::post('/admin/linea/informacion', [ConfiguracionController::class, 'informacionLinea']);
+    Route::post('/admin/linea/editar', [ConfiguracionController::class, 'editarLinea']);
+
+    // --- SUB LINEA ---
+    Route::get('/admin/sublinea/index', [ConfiguracionController::class,'indexSubLinea'])->name('admin.sublinea.index');
+    Route::get('/admin/sublinea/tabla/index', [ConfiguracionController::class,'tablaSubLinea']);
+    Route::post('/admin/sublinea/nuevo', [ConfiguracionController::class, 'nuevaSubLinea']);
+    Route::post('/admin/sublinea/informacion', [ConfiguracionController::class, 'informacionSubLinea']);
+    Route::post('/admin/sublinea/editar', [ConfiguracionController::class, 'editarSubLinea']);
+
+    // --- PROVEEDOR ---
+    Route::get('/admin/proveedor/index', [ConfiguracionController::class,'indexProveedor'])->name('admin.proveedor.index');
+    Route::get('/admin/proveedor/tabla/index', [ConfiguracionController::class,'tablaProveedor']);
+    Route::post('/admin/proveedor/nuevo', [ConfiguracionController::class, 'nuevaProveedor']);
+    Route::post('/admin/proveedor/informacion', [ConfiguracionController::class, 'informacionProveedor']);
+    Route::post('/admin/proveedor/editar', [ConfiguracionController::class, 'editarProveedor']);
+
+    // --- TIPO MEDICAMENTO ---
+    Route::get('/admin/contenidofarmaceutica/index', [ConfiguracionController::class,'indexTipoMedicamento'])->name('admin.contenidofarmaceutica.index');
+    Route::get('/admin/contenidofarmaceutica/tabla/index', [ConfiguracionController::class,'tablaTipoMedicamento']);
+    Route::post('/admin/contenidofarmaceutica/nuevo', [ConfiguracionController::class, 'nuevaTipoMedicamento']);
+    Route::post('/admin/contenidofarmaceutica/informacion', [ConfiguracionController::class, 'informacionTipoMedicamento']);
+    Route::post('/admin/contenidofarmaceutica/editar', [ConfiguracionController::class, 'editarTipoMedicamento']);
+
+    // --- MOTIVO FARMACIA ---
+    Route::get('/admin/motivofarmacia/index', [ConfiguracionController::class,'indexMotivoFarmacia'])->name('admin.motivofarmacia.index');
+    Route::get('/admin/motivofarmacia/tabla/index', [ConfiguracionController::class,'tablaMotivoFarmacia']);
+    Route::post('/admin/motivofarmacia/nuevo', [ConfiguracionController::class, 'nuevaMotivoFarmacia']);
+    Route::post('/admin/motivofarmacia/informacion', [ConfiguracionController::class, 'informacionMotivoFarmacia']);
+    Route::post('/admin/motivofarmacia/editar', [ConfiguracionController::class, 'editarMotivoFarmacia']);
+
+    // --- VIA RECETA ---
+    Route::get('/admin/viareceta/index', [ConfiguracionController::class,'indexViaReceta'])->name('admin.viareceta.index');
+    Route::get('/admin/viareceta/tabla/index', [ConfiguracionController::class,'tablaViaReceta']);
+    Route::post('/admin/viareceta/nuevo', [ConfiguracionController::class, 'nuevaViaReceta']);
+    Route::post('/admin/viareceta/informacion', [ConfiguracionController::class, 'informacionViaReceta']);
+    Route::post('/admin/viareceta/editar', [ConfiguracionController::class, 'editarViaReceta']);
 
 
 

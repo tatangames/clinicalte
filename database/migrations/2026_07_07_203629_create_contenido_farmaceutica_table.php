@@ -22,10 +22,10 @@ return new class extends Migration
     {
         Schema::create('contenido_farmaceutica', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('tipo_farmaceutica_id')->unsigned();
+            $table->bigInteger('id_tipo_farmaceutica')->unsigned();
             $table->string('nombre', 300);
 
-            $table->foreign('tipo_farmaceutica_id')->references('id')->on('tipo_farmaceutica');
+            $table->foreign('id_tipo_farmaceutica')->references('id')->on('tipo_farmaceutica');
         });
     }
 
