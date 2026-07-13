@@ -18,4 +18,14 @@ class FarmaciaArticulo extends Model
         'codigo_articulo',
         'existencia_minima'
     ];
+
+    public function linea()
+    {
+        return $this->belongsTo(Linea::class, 'id_linea');
+    }
+
+    public function subLinea()
+    {
+        return $this->belongsTo(SubLinea::class, 'id_sublinea');
+    }
 }

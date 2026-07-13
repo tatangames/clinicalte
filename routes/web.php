@@ -8,14 +8,9 @@ use App\Http\Controllers\Sistema\RolesController;
 use App\Http\Controllers\Sistema\PerfilController;
 use App\Http\Controllers\Sistema\PermisoController;
 use App\Http\Controllers\Sistema\ConfiguracionController;
-use App\Http\Controllers\Sistema\SalidasController;
-use App\Http\Controllers\Sistema\HistorialController;
-use App\Http\Controllers\Sistema\ReportesController;
-use App\Http\Controllers\Sistema\MaterialesController;
-use App\Http\Controllers\Sistema\RegistrosController;
-use App\Http\Controllers\Sistema\UnidadEmpleadoController;
-use App\Http\Controllers\Sistema\EmpleadoController;
-use App\Http\Controllers\Sistema\HistorialSalidasController;
+use App\Http\Controllers\Sistema\FarmaciaController;
+use App\Http\Controllers\Sistema\CatalogoController;
+
 
 
 Route::get('/', [LoginController::class,'vistaLoginForm'])->name('login.admin');
@@ -153,6 +148,38 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('/admin/viareceta/informacion', [ConfiguracionController::class, 'informacionViaReceta']);
     Route::post('/admin/viareceta/editar', [ConfiguracionController::class, 'editarViaReceta']);
 
+    // --- REGISTRO PRIMER ARTICULO EN FARMACIA---
+    Route::get('/admin/farmacia/registrar/index', [FarmaciaController::class,'indexRegistroArticulo'])->name('admin.registrararticulo.index');
+    Route::post('/admin/farmacia/registrar/nuevo', [FarmaciaController::class, 'registrarArticulo']);
+    // guardar y obtener listado de Contenido Farmaceutica
+    Route::post('/admin/guardar/contenidofarma/get/listado', [FarmaciaController::class, 'guardarExtraContenidoFarmaceutica']);
+
+    // --- INGRESO DE ARTICULO FARMACIA
+    Route::get('/admin/farmacia/ingreso/articulo/index', [FarmaciaController::class,'indexIngresoArticulo'])->name('admin.farmacia.ingreso.articulo');
+    Route::post('/admin/buscar/nombre/medicamento',  [FarmaciaController::class,'buscarMedicamento']);
+    Route::post('/admin/registrar/nuevo/medicamento',  [FarmaciaController::class,'registrarNuevoMedicamento']);
+    // actualizar y agregar extra articulos a una entrada
+    Route::post('/admin/registrar/actualizar/medicamento',  [FarmaciaController::class,'actualizarNuevoMedicamento']);
+
+    // --- REGISTRO PRIMER ARTICULO EN FARMACIA---
+    Route::get('/admin/catalogo/index', [CatalogoController::class,'indexCatalogo'])->name('admin.catalogo.index');
+    Route::get('/admin/catalogo/tabla/index', [CatalogoController::class, 'tablaCatalogo']);
+    // vista editar catalogo
+    Route::get('/admin/catalogo/individual/vista/editar/{idarticulo}', [CatalogoController::class, 'vistaEditarArticuloCatalogo']);
+    Route::post('/admin/catalogo/individual/actualizar', [CatalogoController::class, 'actualizarArticuloCatalogo']);
+
+    // --- HISTORIAL ENTRADAS ---
+    Route::get('/admin/historialentradas/index', [CatalogoController::class,'indexHistorialEntradas'])->name('admin.historialentradas.index');
+    Route::get('/admin/historialentradas/tabla/index', [CatalogoController::class, 'tablaHistorialEntradas']);
+    Route::get('/admin/vista/editar/info/entrada/{identrada}', [CatalogoController::class,'vistaEditarEntrada']);
+    Route::post('/admin/modificar/entrada/medicamento/detalle', [CatalogoController::class,'informacionEntradaMediDetalle']);
+    Route::post('/admin/actualizar/entrada/medicamento/detalle', [CatalogoController::class,'actualizarEntradaMediDetalle']);
+
+
+
+
+
+    //  registrararticulo
 
 
 

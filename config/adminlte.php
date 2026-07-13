@@ -397,8 +397,44 @@ return [
                     'icon' => 'far fa-circle',
                     'route' => 'admin.viareceta.index',
                 ],
+            ],
+        ],
 
 
+        [
+            'text'    => 'Farmacia',
+            'icon'    => 'fas fa-pen-alt',
+            'submenu' => [
+                [
+                    'text' => 'Registrar Artículo',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.registrararticulo.index',
+                ],
+                [
+                    'text' => 'Ingresar Artículo',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.farmacia.ingreso.articulo',
+                ],
+
+
+                [
+                    'text' => 'Catálogo',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.catalogo.index',
+                ],
+            ],
+        ],
+
+
+        [
+            'text'    => 'Historial',
+            'icon'    => 'fas fa-pen-alt',
+            'submenu' => [
+                [
+                    'text' => 'Entradas',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.historialentradas.index',
+                ],
 
             ],
         ],
