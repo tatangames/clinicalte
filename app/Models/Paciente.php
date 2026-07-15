@@ -29,4 +29,25 @@ class Paciente extends Model
         'foto',
         'numero_expediente'
     ];
+
+    // Paciente.php
+    public function tipoDocumento() {
+        return $this->belongsTo(TipoDocumento::class, 'id_tipo_documento');
+    }
+
+    public function tipoPaciente() {
+        return $this->belongsTo(TipoPaciente::class, 'id_tipo');
+    }
+
+    public function profesion() {
+        return $this->belongsTo(Profesion::class, 'id_profesion');
+    }
+
+    public function estadoCivil() {
+        return $this->belongsTo(EstadoCivil::class, 'id_estado_civil');
+    }
+
+
+
+
 }

@@ -13,7 +13,7 @@ class Antecedentes extends Model
 
     protected $fillable = [
         'id_paciente',
-        'id_tipeo_sanguineo_id',
+        'id_tipeo_sanguineo',
         'antecedentes_familiares',
         'alergias',
         'medicamentos_actuales',

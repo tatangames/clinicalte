@@ -324,6 +324,29 @@ return [
             ],
         ],
 
+        [
+            'text' => 'Asignaciones',
+            'icon' => 'far fa-circle',
+            'route' => 'admin.asignaciones.index',
+        ],
+
+        [
+            'text'    => 'Expediente',
+            'icon'    => 'fas fa-pen-alt',
+            'submenu' => [
+                [
+                    'text' => 'Nuevo Expediente',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.nuevoexpediente.index',
+                ],
+                [
+                    'text' => 'Buscar Expediente',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.buscarexpediente.index',
+                ],
+
+            ],
+        ],
 
 
 

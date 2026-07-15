@@ -10,7 +10,11 @@ use App\Http\Controllers\Sistema\PermisoController;
 use App\Http\Controllers\Sistema\ConfiguracionController;
 use App\Http\Controllers\Sistema\FarmaciaController;
 use App\Http\Controllers\Sistema\CatalogoController;
-
+use App\Http\Controllers\Sistema\ExpedienteController;
+use App\Http\Controllers\Sistema\DocumentoRecetaController;
+use App\Http\Controllers\Sistema\AsignacionesController;
+use App\Http\Controllers\Sistema\HistorialClinicoController;
+use App\Http\Controllers\Sistema\NotasController;
 
 
 Route::get('/', [LoginController::class,'vistaLoginForm'])->name('login.admin');
@@ -175,13 +179,128 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('/admin/modificar/entrada/medicamento/detalle', [CatalogoController::class,'informacionEntradaMediDetalle']);
     Route::post('/admin/actualizar/entrada/medicamento/detalle', [CatalogoController::class,'actualizarEntradaMediDetalle']);
 
+    // --- EXPEDIENTE ---
+    Route::get('/admin/expediente/index', [ExpedienteController::class,'indexNuevoExpediente'])->name('admin.nuevoexpediente.index');
+    Route::post('/admin/expediente/registro', [ExpedienteController::class, 'nuevoExpediente']);
+
+    // --- BUSCAR EXPEDIENTE ---
+    Route::get('/admin/buscarexpediente/index', [ExpedienteController::class,'indexBuscarExpediente'])->name('admin.buscarexpediente.index');
+    Route::get('/admin/buscarexpediente/tabla/index', [ExpedienteController::class, 'tablaBuscarExpediente']);
+    Route::get('/admin/pdf/reporte/fichapaciente/general/{idpaciente}', [ExpedienteController::class,'generarReporteFichaGeneralPaciente']);
+
+    Route::get('/admin/asignaciones/info/vista/editarpaciente/{idpaciente}', [ExpedienteController::class,'indexEditarPaciente']);
+    Route::post('/admin/expediente/actualizar', [ExpedienteController::class, 'actualizarExpediente']);
+    Route::get('/admin/documentoreceta/vista/{idpaciente}', [DocumentoRecetaController::class, 'indexDocumentosRecetas']);
+    // antecedentes todos por paciente
+    Route::get('/admin/documentoreceta/bloque/antecedentes/{idpaciente}', [DocumentoRecetaController::class, 'tablaAntecedentesPorPaciente']);
+    // antropometria sv todos por paciente
+    Route::get('/admin/documentoreceta/bloque/antropometriasv/{idpaciente}', [DocumentoRecetaController::class, 'tablaAntropometriaPorPaciente']);
+    // todas las recetas para un paciente
+    Route::get('/admin/documentoreceta/bloque/recetas/{idpaciente}', [DocumentoRecetaController::class, 'tablaRecetasPorPaciente']);
+    // todos los cuadros clinicos de un paciente
+    Route::get('/admin/documentoreceta/bloque/cuadroclinico/{idpaciente}', [DocumentoRecetaController::class, 'tablaCuadroClinicoPorPaciente']);
 
 
 
 
-    //  registrararticulo
 
 
+
+
+
+    // --- ASIGNACIONES ---
+    Route::get('/admin/asignaciones/vista/index', [AsignacionesController::class,'indexAsignaciones'])->name('admin.asignaciones.index');
+    Route::post('/admin/asignaciones/buscar/paciente',  [AsignacionesController::class,'buscadorPaciente']);
+    Route::post('/admin/asignaciones/nuevo/registro',  [AsignacionesController::class,'nuevoRegistro']);
+    Route::get('/admin/asignaciones/paciente/esperando', [AsignacionesController::class,'tablaPacientesEnEspera']);
+    Route::get('/admin/asignaciones/tablamodal/enfermeria', [AsignacionesController::class, 'tablaModalEnfermeria']);
+    Route::get('/admin/asignaciones/tablamodal/consultoria', [AsignacionesController::class, 'tablaModalConsultoria']);
+    Route::post('/admin/asignaciones/informacion/paciente',  [AsignacionesController::class,'informacionPaciente']);
+    Route::post('/admin/asignaciones/informacion/guardar',  [AsignacionesController::class,'guardarInformacionEditadaPaciente']);
+    Route::post('/admin/asignaciones/finalizar/consulta',  [AsignacionesController::class,'finalizarConsultaPaciente']);
+    Route::post('/admin/asignaciones/ingresar/paciente/sala',  [AsignacionesController::class,'ingresarPacienteALaSala']);
+
+
+// devuelve lista de personas que estan dentro de una x sala
+    Route::post('/admin/asignaciones/personas/sala',  [AsignacionesController::class,'personasDentroSala']);
+
+
+
+
+
+
+// Informacion del paciente que esta dentro de la sala, informacion para el modal.
+// Ficha Administrativa
+    Route::post('/admin/asignaciones/info/paciente/dentrosala',  [AsignacionesController::class,'informacionPacienteDentroDeSala']);
+// actualizar razon de uso del paciente dentro de la ficha administrativa
+    Route::post('/admin/asignaciones/actualizar/razonuso/paciente',  [AsignacionesController::class,'actualizarRazonUsoPaciente']);
+// liberar sala de paciente
+    Route::post('/admin/asignaciones/liberarsala/paciente',  [AsignacionesController::class,'liberarSalaPaciente']);
+// informacion paciente que esta dentro de una sala y se trasladara a sala de espera de x sala
+    Route::post('/admin/asignaciones/informacion/paciente/dentrosala',  [AsignacionesController::class,'informacionPacienteDentroSala']);
+// trasladar paciente a nueva sala, pero se ira a sala de espera primero
+    Route::post('/admin/asignaciones/traslado/paciente/reseteo',  [AsignacionesController::class,'reseteoTrasladoPacienteNuevaSala']);
+// recarga por cronometro
+    Route::post('/admin/asignaciones/recargando/cronometro',  [AsignacionesController::class,'recargandoVistaCronometro']);
+
+
+
+    // --- HISTORIAL CLINICO ---
+    Route::get('/admin/historial/clinico/vista/{idconsulta}', [HistorialClinicoController::class, 'indexHistorialClinico']);
+    // bloque antecedentes
+    Route::get('/admin/historial/bloque/antecedente/{idconsulta}', [HistorialClinicoController::class, 'bloqueHistorialAntecedente']);
+    // actualizar listado de checkbox de antecedente del paciente
+    Route::post('/admin/historial/antecedente/actualizacion', [HistorialClinicoController::class, 'actualizarListadoPacienteAntecedente']);
+
+    // bloque antrop + sv
+    Route::get('/admin/historial/bloque/antropsv/{idconsulta}', [HistorialClinicoController::class, 'bloqueHistorialAntropSv']);
+
+    // vista para registar nueva antrop + sv
+    Route::get('/admin/vista/nueva/antropometria/{idconsulta}', [HistorialClinicoController::class, 'vistaNuevaAntropologia']);
+
+
+    // registrar formulario de antropometria
+    Route::post('/admin/historial/registrar/antropometria', [HistorialClinicoController::class, 'registrarAntropometria']);
+
+    // vista para editar o ver la antropometria
+    Route::get('/admin/vista/visualizar/antropometria/{idantro}', [HistorialClinicoController::class, 'vistaVisualizarAntropologia']);
+
+
+
+    // actualizar antropometria
+    Route::post('/admin/historial/actualizar/antropometria', [HistorialClinicoController::class, 'actualizarAntropometria']);
+
+
+    // bloque recetas
+    Route::get('/admin/historial/bloque/recetas/{idconsulta}', [HistorialClinicoController::class, 'bloqueHistorialRecetas']);
+
+    // bloque cuadro clinico
+    Route::get('/admin/historial/bloque/cuadroclinico/{idconsulta}', [HistorialClinicoController::class, 'bloqueHistorialCuadroClinico']);
+
+
+    Route::post('/admin/historial/borrar/antropometria', [HistorialClinicoController::class, 'borrarAntropometria']);
+
+
+    // BLOQUE NOTAS
+    Route::get('/admin/historial/bloque/notas/{idconsulta}', [NotasController::class, 'bloqueNotasPaciente']);
+    Route::post('/admin/historial/bloque/registrar/nota', [NotasController::class, 'registrarNotaPaciente']);
+    Route::post('/admin/historial/bloque/notas/borrar', [NotasController::class, 'borrarNotaPaciente']);
+    Route::post('/admin/historial/bloque/notas/informacion', [NotasController::class, 'informacionNotaPaciente']);
+    Route::post('/admin/historial/bloque/actualizar/nota', [NotasController::class, 'actualizarNotaPaciente']);
+
+    // Reporte para notas paciente
+    Route::get('/admin/pdf/reporte/notapaciente/{idfila}', [NotasController::class,'reporteNotaPaciente']);
+
+
+
+    // guardar un nuevo historial clinico
+    Route::post('/admin/historial/nuevo/historialclinico', [HistorialClinicoController::class, 'nuevoHistorialClinico']);
+
+    // informacion de un cuadro clinico para editar
+    Route::post('/admin/historial/informacion/historialclinico', [HistorialClinicoController::class, 'informacionHistorialClinico']);
+
+    // actualizar un cuadro clinico
+    Route::post('/admin/historial/actualizar/historialclinico', [HistorialClinicoController::class, 'actualizarHistorialClinico']);
 
 
 }); // end auth
