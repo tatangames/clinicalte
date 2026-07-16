@@ -6,7 +6,7 @@
     <div class="d-flex align-items-center">
         <button type="button"
                 onclick="vistaExpedientes()"
-                class="btn btn-sm btn-warning font-weight-bold">
+                class="btn btn-sm btn-warning font-weight-bold" style="color: white">
             <i class="fas fa-arrow-left mr-1"></i> Atrás
         </button>
 
@@ -463,7 +463,9 @@
                             confirmButtonColor: '#1a7abf',
                             allowOutsideClick: false,
                             confirmButtonText: 'Aceptar'
-                        }).then(({ value }) => { if (value) vistaExpedientes(); });
+                        }).then(function () {
+
+                        });
                     } else {
                         toastr.error('Error al actualizar. Intenta de nuevo.');
                     }
@@ -475,7 +477,7 @@
         }
 
         function vistaExpedientes() {
-            window.location.href = "{{ url('/admin/expediente/vista/buscar') }}";
+            window.location.href = "{{ url('/admin/buscarexpediente/index') }}";
         }
 
     </script>

@@ -439,12 +439,24 @@ return [
                     'route' => 'admin.farmacia.ingreso.articulo',
                 ],
 
+                [
+                    'text' => 'Orden de Salida',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.salida.recetas.farmacia.index',
+                ],
+
+                [
+                    'text' => 'Salida Manual',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.salida.manual.index',
+                ],
 
                 [
                     'text' => 'Catálogo',
                     'icon' => 'far fa-circle',
                     'route' => 'admin.catalogo.index',
                 ],
+
             ],
         ],
 

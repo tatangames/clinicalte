@@ -46,12 +46,20 @@
                                     onclick="infoEditarReceta({{ $dato->id }})">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
+
+                          <!-- UNICAMENTE SI ESTA PENDIENTE -->
+                            <button type="button" class="btn btn-danger btn-xs"
+                                        onclick="confirmarBorrarReceta({{ $dato->id }})">
+                                    <i class="fas fa-trash-alt"></i> Borrar
+                           </button>
+
                         @else
                             <button type="button" class="btn btn-info btn-xs"
                                     onclick="infoEditarReceta({{ $dato->id }})">
                                 <i class="fas fa-eye"></i> Ver
                             </button>
                         @endif
+
                         <button type="button" class="btn btn-success btn-xs"
                                 onclick="imprimirRecetaMedica({{ $dato->id }})">
                             <i class="fas fa-print"></i> Imprimir
@@ -66,16 +74,53 @@
 
 <script>
     $(function () {
-        // Ordenación por fecha d-m-Y
         $.fn.dataTable.ext.type.order['date-dmy-pre'] = function (d) {
             var p = d.split('-');
             return p[2] + p[1] + p[0];
         };
-
         initDataTable('#tableRecetasDt', { columnDefs: [{ type: 'date-dmy', targets: 0 }] });
     });
 
     function imprimirRecetaMedica(idreceta) {
         window.open("{{ URL::to('admin/reporte/receta/paciente') }}/" + idreceta);
+    }
+
+    function confirmarBorrarReceta(idreceta) {
+        Swal.fire({
+            title: '¿Borrar receta?',
+            text: 'Esta acción eliminará la receta permanentemente.',
+            type: 'warning',
+            showCancelButton: true,
+            allowOutsideClick: false,
+            confirmButtonColor: '#e3342f',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, borrar',
+            cancelButtonText: 'Cancelar'
+        }).then(function (result) {
+            if (result.value) {
+                borrarReceta(idreceta);
+            }
+        });
+    }
+
+    function borrarReceta(idreceta) {
+        openLoading();
+        var formData = new FormData();
+        formData.append('idreceta', idreceta);
+
+        axios.post(urlAdmin + '/admin/recetas/borrar', formData)
+            .then(function (response) {
+                closeLoading();
+                if (response.data.success === 1) {
+                    toastr.success('Receta eliminada');
+                    $('#tablaRecetas').load("{{ URL::to('/admin/historial/bloque/recetas') }}/" + IDCONSULTA);
+                } else {
+                    toastr.error('No se pudo eliminar la receta');
+                }
+            })
+            .catch(function () {
+                closeLoading();
+                toastr.error('Error al eliminar la receta');
+            });
     }
 </script>

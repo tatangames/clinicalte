@@ -52,7 +52,7 @@
 
         <section class="content-header">
             <div class="container-fluid">
-                <button type="button" onclick="volverAtras()" class="btn btn-primary btn-sm">
+                <button type="button" onclick="volverAtras()" style="color: white" class="btn btn-warning btn-sm">
                     <i class="fas fa-arrow-left"></i>
                     Atras
                 </button>
@@ -61,7 +61,7 @@
 
         <section class="content" style="margin-top: 20px">
             <div class="container-fluid">
-                <div class="card card-success">
+                <div class="card card-gray-dark">
                     <div class="card-header">
                         <h3 class="card-title">ARTICULO: {{ $infoArticulo->nombre }}</h3>
                     </div>

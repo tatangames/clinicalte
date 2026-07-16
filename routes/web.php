@@ -15,6 +15,10 @@ use App\Http\Controllers\Sistema\DocumentoRecetaController;
 use App\Http\Controllers\Sistema\AsignacionesController;
 use App\Http\Controllers\Sistema\HistorialClinicoController;
 use App\Http\Controllers\Sistema\NotasController;
+use App\Http\Controllers\Sistema\RecetasController;
+use App\Http\Controllers\Sistema\ReportesController;
+use App\Http\Controllers\Sistema\SalidaRecetaController;
+use App\Http\Controllers\Sistema\SalidaManualController;
 
 
 Route::get('/', [LoginController::class,'vistaLoginForm'])->name('login.admin');
@@ -270,6 +274,9 @@ Route::middleware('auth:admin')->group(function () {
     // actualizar antropometria
     Route::post('/admin/historial/actualizar/antropometria', [HistorialClinicoController::class, 'actualizarAntropometria']);
 
+    // editar antropometria siempre, pero se busca desde los expedientes
+    Route::get('/admin/vista/visualizar/antropometria/exped/{idantro}', [HistorialClinicoController::class, 'vistaVisualizarAntropologiaExpedientes']);
+
 
     // bloque recetas
     Route::get('/admin/historial/bloque/recetas/{idconsulta}', [HistorialClinicoController::class, 'bloqueHistorialRecetas']);
@@ -301,6 +308,57 @@ Route::middleware('auth:admin')->group(function () {
 
     // actualizar un cuadro clinico
     Route::post('/admin/historial/actualizar/historialclinico', [HistorialClinicoController::class, 'actualizarHistorialClinico']);
+
+
+
+    // vista de agregar receta
+    Route::get('/admin/recetas/vista/general/{idconsulta}', [RecetasController::class, 'indexVistaNuevaReceta']);
+    // listado de medicamentos por fuente
+    Route::post('/admin/recetas/medicamentos/porfuente', [RecetasController::class, 'listadoMedicamentosPorFuenteFinan']);
+    // registar la nueva receta al paciente
+    Route::post('/admin/recetas/registro/parapaciente', [RecetasController::class, 'registroNuevaRecetaParaPaciente']);
+
+    // vista para editar o ver la receta individual
+    Route::get('/admin/recetas/vista/paraeditar/{idreceta}', [RecetasController::class, 'indexVistaEditarVerReceta']);
+
+    // actualizar la receta si es permitido por estado
+    Route::post('/admin/recetas/actualizar/parapaciente', [RecetasController::class, 'actualizarRecetaMedica']);
+
+    // reporte de receta por idreceta
+    Route::get('/admin/reporte/receta/paciente/{idreceta}', [ReportesController::class,'reporteRecetaPaciente']);
+
+    Route::post('/admin/recetas/borrar', [ReportesController::class, 'borrarReceta']);
+
+
+
+    // --- SALIDA MEDICAMENTO POR RECETA
+    Route::get('/admin/salida/medicamento/porreceta/index', [SalidaRecetaController::class,'indexSalidaFarmaciaPorReceta'])->name('admin.salida.recetas.farmacia.index');
+    Route::get('/admin/salida/medicamento/porreceta/tabla/{idestado}/{fechainicio}/{fechafin}', [SalidaRecetaController::class,'tablaSalidaFarmaciaPorReceta']);
+
+    // informacion de receta para denegarla
+    Route::post('/admin/orden/salida/informacion/paradenegar', [SalidaRecetaController::class, 'infoRecetaParaDenegar']);
+    // guardar la denegacion de una receta
+    Route::post('/admin/orden/salida/guardar/denegacion', [SalidaRecetaController::class, 'guardarDenegacionReceta']);
+    // retornar paciente a sala de nuevo
+    Route::post('/admin/paciente/retonarsala', [SalidaRecetaController::class, 'retornarPacienteSala']);
+    // vista salida para procesar la receta
+    Route::get('/admin/vista/procesar/recetamedica/{idreceta}', [SalidaRecetaController::class,'vistaRecetaDetalleProcesar']);
+    // guardar salida de receta procesada por farmacia
+    Route::post('/admin/receta/procesar/guardarsalida', [SalidaRecetaController::class, 'guardarSalidaProcesadaDeReceta']);
+
+
+
+
+    Route::get('/admin/salida/medicamento/farmacia/index', [SalidaManualController::class,'indexSalidaFarmacia'])->name('admin.salida.manual.index');
+    Route::post('/admin/registrar/orden/salida/medicamento', [SalidaManualController::class, 'registrarOrdenSalidaFarmacia']);
+    Route::get('/admin/buscar/producto/salida/farmacia/{idproducto}', [SalidaManualController::class,'elegirProductoParaSalida']);
+
+
+
+
+
+
+
 
 
 }); // end auth

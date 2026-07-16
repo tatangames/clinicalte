@@ -61,7 +61,6 @@
                 <th style="width:10%">Fecha</th>
                 <th style="width:15%">Tipo diagnóstico</th>
                 <th style="width:13%">Creado por</th>
-                <th>Descripción</th>
             </tr>
             </thead>
             <tbody>
@@ -70,7 +69,6 @@
                     <td>{{ $dato->fechaFormat }}</td>
                     <td>{{ $dato->nombreDiagnostico }}</td>
                     <td>{{ $dato->doctor }}</td>
-                    <td class="desc-cell">{!! $dato->descripcion !!}</td>
                 </tr>
             @endforeach
             </tbody>

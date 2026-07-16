@@ -6,7 +6,8 @@
     <div class="d-flex align-items-center">
         <button type="button"
                 onclick="vistaAtras()"
-                class="btn btn-sm btn-warning font-weight-bold">
+                class="btn btn-sm btn-warning font-weight-bold"
+                style="color: white">
             <i class="fas fa-arrow-left mr-1"></i> Atrás
         </button>
 

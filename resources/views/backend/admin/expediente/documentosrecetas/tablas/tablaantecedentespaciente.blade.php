@@ -51,7 +51,7 @@
 </style>
 
 @php
-    $ant = $b1_antecedentes; {{-- alias corto --}}
+    $ant = $b1_antecedentes; // alias corto
 @endphp
 
 {{-- 1. Datos generales --}}
@@ -89,7 +89,7 @@
     </div>
 </div>
 
-{{-- Macro para bloques con checkboxes --}}
+{{-- Bloques con checkboxes --}}
 @php
     $bloquesCheck = [
         [
@@ -173,10 +173,10 @@
     <div class="row">
         @php
             $gine = [
-                ['id' => 'dato-menarquia',     'label' => 'Menarquía',       'valor' => $ant->menarquia       ?? ''],
-                ['id' => 'dato-ciclomenstrual', 'label' => 'Ciclo menstrual', 'valor' => $ant->ciclo_menstrual ?? ''],
-                ['id' => 'dato-pap',           'label' => 'PAP',             'valor' => $ant->pap             ?? ''],
-                ['id' => 'dato-mamografia',    'label' => 'Mamografía',      'valor' => $ant->mamografia      ?? ''],
+                ['id' => 'dato-menarquia',      'label' => 'Menarquía',       'valor' => $ant->menarquia       ?? ''],
+                ['id' => 'dato-ciclomenstrual',  'label' => 'Ciclo menstrual', 'valor' => $ant->ciclo_menstrual ?? ''],
+                ['id' => 'dato-pap',            'label' => 'PAP',             'valor' => $ant->pap             ?? ''],
+                ['id' => 'dato-mamografia',     'label' => 'Mamografía',      'valor' => $ant->mamografia      ?? ''],
             ];
         @endphp
 

@@ -336,6 +336,19 @@ class HistorialClinicoController extends Controller
         return ['success' => 1];
     }
 
+    public function vistaVisualizarAntropologiaExpedientes($idantrop){
+
+        $infoAntrop = Antropometria::where('id', $idantrop)->first();
+        $infoConsulta = ConsultaPaciente::where('id', $infoAntrop->id_consulta)->first();
+        $infoPaciente = Paciente::where('id', $infoConsulta->id_paciente)->first();
+
+        $nombreCompleto = $infoPaciente->nombres . " " . $infoPaciente->apellidos;
+        $idconsulta = $infoConsulta->id;
+
+        return view('backend.admin.expediente.documentosrecetas.vistaverantropometria', compact('idantrop',
+            'nombreCompleto', 'idconsulta', 'infoAntrop'));
+    }
+
     function bloqueHistorialRecetas($idconsulta){
 
         $infoConsulta = ConsultaPaciente::where('id', $idconsulta)->first();
