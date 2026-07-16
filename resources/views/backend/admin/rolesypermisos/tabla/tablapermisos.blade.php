@@ -4,8 +4,8 @@
         <th>Nombre</th>
         <th>Rol</th>
         <th>Usuario</th>
-        <th>Opciones</th>
         <th style="width: 10%">Activo</th>
+        <th>Opciones</th>
     </tr>
     </thead>
     <tbody>
