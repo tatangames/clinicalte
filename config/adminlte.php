@@ -328,11 +328,13 @@ return [
             'text' => 'Asignaciones',
             'icon' => 'far fa-circle',
             'route' => 'admin.asignaciones.index',
+            'can'   => 'sidebar.asignaciones',
         ],
 
         [
             'text'    => 'Expediente',
             'icon'    => 'fas fa-pen-alt',
+            'can'     => 'sidebar.expedientes',
             'submenu' => [
                 [
                     'text' => 'Nuevo Expediente',
@@ -354,6 +356,7 @@ return [
         [
             'text'    => 'Configuración',
             'icon'    => 'fas fa-pen-alt',
+            'can'     => 'sidebar.configuracion',
             'submenu' => [
                 [
                     'text' => 'Tipo Paciente',
@@ -427,6 +430,7 @@ return [
         [
             'text'    => 'Farmacia',
             'icon'    => 'fas fa-pen-alt',
+            'can'     => 'sidebar.farmacia',
             'submenu' => [
                 [
                     'text' => 'Registrar Artículo',
@@ -464,6 +468,7 @@ return [
         [
             'text'    => 'Historial',
             'icon'    => 'fas fa-pen-alt',
+            'can'     => 'sidebar.reportes',
             'submenu' => [
                 [
                     'text' => 'Entradas',
@@ -473,13 +478,6 @@ return [
 
             ],
         ],
-
-
-
-
-
-
-
 
 
 
