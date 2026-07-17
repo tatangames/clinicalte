@@ -62,56 +62,67 @@ class RecetasController extends Controller
             'nombreCompleto', 'arrayFuente', 'arrayDiagnostico', 'arrayVia', 'fechaActual'));
     }
 
-    public function listadoMedicamentosPorFuenteFinan(Request $request){
-
-        $regla = array(
-            'idfuente' => 'required'
-        );
-
+    public function listadoMedicamentosPorFuenteFinan(Request $request)
+    {
+        $regla = ['idfuente' => 'required'];
         $validar = Validator::make($request->all(), $regla);
+        if ($validar->fails()) { return ['success' => 0]; }
 
-        if ($validar->fails()){ return ['success' => 0];}
-
-
-        // OBTENER LISTADO DE MEDICAMENTOS
+        // Traer entradas con su medicamento en un solo query
         $arrayMedicamentos = DB::table('entrada_medicamento AS em')
             ->join('entrada_medicamento_detalle AS deta', 'em.id', '=', 'deta.id_entrada_medicamento')
-            ->select('deta.cantidad', 'deta.id', 'em.id_fuentefina', 'deta.id_medicamento', 'deta.lote',
-                'deta.fecha_vencimiento')
-            ->where('deta.cantidad', '>', 0)
+            ->join('farmacia_articulo AS fa', 'fa.id', '=', 'deta.id_medicamento')
+            ->leftJoin('articulo_medicamento AS am', 'am.id_farmacia_articulo', '=', 'deta.id_medicamento')
+            ->select(
+                'deta.id',
+                'deta.id_medicamento',
+                'deta.cantidad AS cantidad_entrada',
+                'deta.lote',
+                'deta.fecha_vencimiento',
+                'em.id_fuentefina',
+                'fa.nombre',
+                'am.nombre_generico'
+            )
             ->where('em.id_fuentefina', $request->idfuente)
             ->get();
 
-        $hayFilas = false;
-        foreach ($arrayMedicamentos as $detalle){
-            $hayFilas = true;
+        // Calcular salidas de todos estos lotes en UN solo query
+        $ids = $arrayMedicamentos->pluck('id');
 
-            $infoFarmacia = FarmaciaArticulo::where('id', $detalle->id_medicamento)->first();
-            $detalle->nombre = $infoFarmacia->nombre;
-            $fechaVencimiento = date("d-m-Y", strtotime($detalle->fecha_vencimiento));
+        $salidas = DB::table('salida_receta_detalle')
+            ->whereIn('id_entrada_detalle', $ids)
+            ->select('id_entrada_detalle', DB::raw('SUM(cantidad) as total_salida'))
+            ->groupBy('id_entrada_detalle')
+            ->pluck('total_salida', 'id_entrada_detalle');
 
-            $textoLote = "(Lote: " . $detalle->lote . " )";
-            $textoFechaVen = "(Vencimiento: " . $fechaVencimiento . " )";
-            $textoExistencia = "(Existencia: " . $detalle->cantidad . " )";
+        $resultado = [];
 
-            $detalle->nombretotal = $infoFarmacia->nombre . " " . $textoExistencia . " " . $textoLote . " " . $textoFechaVen;
+        foreach ($arrayMedicamentos as $detalle) {
+            // Stock real = lo que entró - lo que ya se despachó de este lote
+            $totalSalida  = $salidas[$detalle->id] ?? 0;
+            $stockReal    = $detalle->cantidad_entrada - $totalSalida;
 
-            $nombreGenerico = "";
+            // Solo mostrar lotes con stock disponible
+            if ($stockReal <= 0) continue;
 
-            if($infoArticulo = ArticuloMedicamento::where('id_farmacia_articulo', $detalle->id_medicamento)->first()){
+            $fechaVencimiento = \Carbon\Carbon::parse($detalle->fecha_vencimiento)->format('d-m-Y');
 
-                if($infoArticulo->nombre_generico != null){
-                    $nombreGenerico = $infoArticulo->nombre_generico;
-                }
-            }
+            $detalle->cantidadTotal = $stockReal;
+            $detalle->nombretotal   = $detalle->nombre
+                . ' (Existencia: ' . $stockReal . ')'
+                . ' (Lote: ' . $detalle->lote . ')'
+                . ' (Vencimiento: ' . $fechaVencimiento . ')';
+            $detalle->nombreGenerico = $detalle->nombre_generico ?? '';
 
-            $detalle->nombreGenerico = $nombreGenerico;
-            $detalle->cantidadTotal = $detalle->cantidad;
+            $resultado[] = $detalle;
         }
 
-        return ['success' => 1, 'dataArray' => $arrayMedicamentos, 'hayfilas' => $hayFilas];
+        return [
+            'success'   => 1,
+            'dataArray' => $resultado,
+            'hayfilas'  => count($resultado) > 0,
+        ];
     }
-
 
 
     public function registroNuevaRecetaParaPaciente(Request $request){

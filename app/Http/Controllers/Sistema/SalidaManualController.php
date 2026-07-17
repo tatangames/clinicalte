@@ -14,6 +14,8 @@ use App\Models\Linea;
 use App\Models\MotivoFarmacia;
 use App\Models\ObjetoEspecifico;
 use App\Models\Proveedores;
+use App\Models\SalidaReceta;
+use App\Models\SalidaRecetaDetalle;
 use App\Models\SubLinea;
 use App\Models\TipoFactura;
 use Carbon\Carbon;
@@ -26,105 +28,128 @@ use Illuminate\Support\Facades\Validator;
 class SalidaManualController extends Controller
 {
 
-    public function indexSalidaFarmacia(){
-
+    public function indexSalidaFarmacia()
+    {
         $arrayMotivo = MotivoFarmacia::orderBy('nombre')->get();
 
-        $arrayProductoFarmacia = FarmaciaArticulo::all();
+        // IDs de entrada_medicamento_detalle que ya tuvieron salida,
+        // junto con su cantidad despachada total
+        $salidas = SalidaRecetaDetalle::select('id_entrada_detalle',
+            DB::raw('SUM(cantidad) as total_salida'))
+            ->groupBy('id_entrada_detalle')
+            ->pluck('total_salida', 'id_entrada_detalle');
 
-        $pilaIdProducto = array();
+        // Calcular stock real por medicamento:
+        // suma de entradas - suma de salidas de cada entrada_detalle
+        $stockPorMedicamento = EntradaMedicamentoDetalle::select(
+            'id_medicamento',
+            DB::raw('SUM(cantidad) as total_entrada'),
+            DB::raw('SUM(COALESCE((
+                        SELECT SUM(srd.cantidad)
+                        FROM salida_receta_detalle srd
+                        WHERE srd.id_entrada_detalle = entrada_medicamento_detalle.id
+                    ), 0)) as total_salida')
+        )
+            ->groupBy('id_medicamento')
+            ->get()
+            ->mapWithKeys(function ($row) {
+                return [
+                    $row->id_medicamento => $row->total_entrada - $row->total_salida
+                ];
+            });
 
-        foreach ($arrayProductoFarmacia as $info){
+        // Solo medicamentos con stock > 0
+        $idsConStock = $stockPorMedicamento->filter(fn($stock) => $stock > 0)->keys();
 
-            // NECESITO UNICAMENTE CANTIDAD MAYOR A 0
+        $arrayProducto = FarmaciaArticulo::whereIn('id', $idsConStock)
+            ->orderBy('nombre')
+            ->get();
 
-            $cantidad = EntradaMedicamentoDetalle::where('id_medicamento', $info->id)->sum('cantidad');
+        foreach ($arrayProducto as $detalle) {
+            $stock = $stockPorMedicamento[$detalle->id] ?? 0;
 
-            if($cantidad > 0){
-                array_push($pilaIdProducto, $info->id);
-            }
+            $detalle->nombretotal = ($detalle->codigo_articulo
+                    ? $detalle->codigo_articulo . ' - ' . $detalle->nombre
+                    : $detalle->nombre)
+                . ' (Existencia: ' . $stock . ')';
         }
 
-
-        $arrayProducto = FarmaciaArticulo::whereIn('id', $pilaIdProducto)->orderBy('nombre', 'ASC')->get();
-
-        foreach ($arrayProducto as $detalle){
-
-            $cantidadTotal = EntradaMedicamentoDetalle::where('id_medicamento', $detalle->id)->sum('cantidad');
-
-            if($detalle->codigo_articulo != null){
-                $detalle->nombretotal = $detalle->codigo_articulo . ' - ' . $detalle->nombre . ' (Existencia: ' . $cantidadTotal . ')';
-            }else{
-                $detalle->nombretotal = $detalle->nombre . ' (Existencia: ' . $cantidadTotal . ')';
-            }
-        }
-
-        return view('backend.admin.farmacia.salidamanual.vistaordensalidamanual', compact('arrayMotivo', 'arrayProducto'));
+        return view('backend.admin.farmacia.salidamanual.vistaordensalidamanual',
+            compact('arrayMotivo', 'arrayProducto'));
     }
 
 
 
-    public function registrarOrdenSalidaFarmacia(Request $request){
-
+    public function registrarOrdenSalidaFarmacia(Request $request)
+    {
         $regla = array(
             'motivo' => 'required',
-            'fecha' => 'required'
+            'fecha'  => 'required'
         );
 
         $validar = Validator::make($request->all(), $regla);
 
-        if ($validar->fails()){ return ['success' => 0];}
-
+        if ($validar->fails()) {
+            return ['success' => 0];
+        }
 
         DB::beginTransaction();
 
         try {
 
-            // Obtiene los datos enviados desde el formulario como una cadena JSON y luego decódificala
-            $datosContenedor = json_decode($request->contenedorArray, true); // El segundo argumento convierte el resultado en un arreglo
+            $datosContenedor = json_decode($request->contenedorArray, true);
 
-            $usuario = auth()->user();
-            $horaCarbon = Carbon::parse(Carbon::now());
+            $usuario  = auth()->user();
+            $fechaHora = Carbon::parse($request->fecha)->setTimeFrom(Carbon::now());
 
-            $orden = new OrdenSalida();
-            $orden->id_usuario = $usuario->id;
-            $orden->id_motivo = $request->motivo;
-            $orden->fecha = $request->fecha;
-            $orden->hora = $horaCarbon;
-            $orden->observaciones = $request->observaciones;
+            $orden = new SalidaReceta();
+            $orden->id_recetas  = null;
+            $orden->id_usuario  = $usuario->id;
+            $orden->id_motivo   = $request->motivo;
+            $orden->fecha       = $fechaHora;
+            $orden->notas       = $request->observaciones;
+            $orden->tipo_salida = 'manual';
             $orden->save();
 
             $fila = 0;
 
-            // REGISTRAR CADA SALIDA
             foreach ($datosContenedor as $filaArray) {
                 $fila++;
 
-                $infoEntrada = EntradaMedicamentoDetalle::where('id', $filaArray['infoIdEntrada'])->first();
+                // Bloquear fila para evitar condición de carrera
+                $infoEntrada = EntradaMedicamentoDetalle::where('id', $filaArray['infoIdEntrada'])
+                    ->lockForUpdate()
+                    ->first();
 
-                $resta = $infoEntrada->cantidad - $filaArray['infoCantidad'];
-
-                if($resta < 0){
-                    return ['success' => 1, 'fila' => $fila, 'cantidad' => $infoEntrada->cantidad];
+                if (!$infoEntrada) {
+                    DB::rollback();
+                    return ['success' => 99];
                 }
 
-                // ACTUALIZAR CANTIDAD
+                // Stock real = cantidad original de entrada - todo lo ya despachado de este lote
+                $totalSalidas = SalidaRecetaDetalle::where('id_entrada_detalle', $infoEntrada->id)
+                    ->sum('cantidad');
 
-                EntradaMedicamentoDetalle::where('id', $filaArray['infoIdEntrada'])->update([
-                    'cantidad' => $resta
-                ]);
+                $stockReal = $infoEntrada->cantidad - $totalSalidas;
+                $resta     = $stockReal - $filaArray['infoCantidad'];
 
-                $detalle = new OrdenSalidaDetalle();
-                $detalle->id_orden_salida = $orden->id;
-                $detalle->id_entrada_medi_detalle = $filaArray['infoIdEntrada'];
-                $detalle->cantidad = $filaArray['infoCantidad'];
+                if ($resta < 0) {
+                    DB::rollback();
+                    return ['success' => 1, 'fila' => $fila, 'cantidad' => $stockReal];
+                }
+
+                // Registrar la salida — NO se modifica entrada_medicamento_detalle
+                $detalle = new SalidaRecetaDetalle();
+                $detalle->id_salidareceta    = $orden->id;
+                $detalle->id_entrada_detalle = $filaArray['infoIdEntrada'];
+                $detalle->cantidad           = $filaArray['infoCantidad'];
                 $detalle->save();
             }
 
             DB::commit();
             return ['success' => 2];
 
-        }catch(\Throwable $e){
+        } catch (\Throwable $e) {
             Log::info('error ' . $e);
             DB::rollback();
             return ['success' => 99];

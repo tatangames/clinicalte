@@ -216,8 +216,8 @@
                 <i class="fas fa-arrow-left"></i> Atrás
             </button>
             <span style="font-size:14px; font-weight:700; color:#343a40;">
-            <i class="fas fa-clipboard-check mr-1 text-success"></i> Procesar Receta Médica
-        </span>
+                <i class="fas fa-clipboard-check mr-1 text-success"></i> Procesar Receta Médica
+            </span>
         </div>
 
         {{-- ── Ficha del paciente ── --}}
@@ -242,18 +242,18 @@
                     <div>
                         <p class="pr-patient-name">{{ $nombreCompleto }}</p>
                         <div class="pr-chips">
-                        <span class="pr-chip pr-chip-blue">
-                            <i class="fas fa-birthday-cake" style="font-size:10px"></i>
-                            Edad: {{ $edad }}
-                        </span>
+                            <span class="pr-chip pr-chip-blue">
+                                <i class="fas fa-birthday-cake" style="font-size:10px"></i>
+                                Edad: {{ $edad }}
+                            </span>
                             <span class="pr-chip pr-chip-green">
-                            <i class="fas fa-user-md" style="font-size:10px"></i>
-                            {{ $nombreDoctor }}
-                        </span>
+                                <i class="fas fa-user-md" style="font-size:10px"></i>
+                                {{ $nombreDoctor }}
+                            </span>
                             <span class="pr-chip pr-chip-amber">
-                            <i class="fas fa-calendar-alt" style="font-size:10px"></i>
-                            Receta: {{ $fechaReceta }}
-                        </span>
+                                <i class="fas fa-calendar-alt" style="font-size:10px"></i>
+                                Receta: {{ $fechaReceta }}
+                            </span>
                         </div>
                     </div>
 
@@ -261,8 +261,7 @@
             </div>
         </div>
 
-        {{-- ── Aviso si hay filas excedidas ── --}}
-        @php $hayExcedidos = $arrayNombreMedicamento->where('cantidadRetirar', '>', 'cantidadActual')->count(); @endphp
+        {{-- ── Aviso si hay filas excedidas (comparación numérica correcta) ── --}}
         @if($arrayNombreMedicamento->contains(fn($i) => $i->cantidadRetirar > $i->cantidadActual))
             <div class="pr-alert-notice">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -276,13 +275,13 @@
                 <div class="pr-card-icon pr-card-icon-green"><i class="fas fa-pills"></i></div>
                 <span class="pr-card-title">Medicamentos a despachar</span>
                 <span style="
-                margin-left:auto;
-                background:var(--pr-green-lt); color:var(--pr-green);
-                padding:2px 10px; border-radius:20px;
-                font-size:11px; font-weight:700;">
-                {{ count($arrayNombreMedicamento) }}
+                    margin-left:auto;
+                    background:var(--pr-green-lt); color:var(--pr-green);
+                    padding:2px 10px; border-radius:20px;
+                    font-size:11px; font-weight:700;">
+                    {{ count($arrayNombreMedicamento) }}
                     {{ count($arrayNombreMedicamento) == 1 ? 'ítem' : 'ítems' }}
-            </span>
+                </span>
             </div>
 
             <div style="overflow-x:auto;">
@@ -335,7 +334,8 @@
                     @empty
                         <tr>
                             <td colspan="6" style="text-align:center; padding:2rem; color:#adb5bd;">
-                                <i class="fas fa-prescription-bottle-alt" style="font-size:1.5rem; display:block; margin-bottom:.5rem;"></i>
+                                <i class="fas fa-prescription-bottle-alt"
+                                   style="font-size:1.5rem; display:block; margin-bottom:.5rem;"></i>
                                 Sin medicamentos en esta receta.
                             </td>
                         </tr>
@@ -344,7 +344,7 @@
                 </table>
             </div>
 
-            {{-- Notas + botón dentro del card con footer sticky --}}
+            {{-- Notas --}}
             <div style="padding:1.1rem 1.2rem; border-top:1px solid var(--pr-border);">
                 <label class="pr-label">Notas adicionales</label>
                 <textarea id="text-notas" rows="3" class="form-control"
@@ -352,6 +352,7 @@
                           placeholder="Observaciones del despacho…"></textarea>
             </div>
 
+            {{-- Footer sticky --}}
             <div class="pr-footer">
                 <button type="button" class="pr-btn pr-btn-back" onclick="volverAtras()">
                     Cancelar
@@ -365,7 +366,7 @@
     </div>{{-- /pr-wrap --}}
 
 
-    {{-- ══ MODAL: Cantidad superada (fallback, rara vez aparece) ══ --}}
+    {{-- ══ MODAL: Cantidad superada (fallback) ══ --}}
     <div class="modal fade" id="modalCantiSuperada">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="border-radius:12px; overflow:hidden;">
@@ -394,6 +395,7 @@
     <script src="{{ asset('js/select2.min.js') }}" type="text/javascript"></script>
 
     <script>
+
         function volverAtras() {
             window.location.href = "{{ url('/admin/salida/medicamento/porreceta/index') }}";
         }
@@ -428,13 +430,13 @@
 
             var fd = new FormData();
             fd.append('idreceta', idreceta);
-            fd.append('notas', notas);
+            fd.append('notas',    notas);
 
             axios.post(urlAdmin + '/admin/receta/procesar/guardarsalida', fd)
                 .then(function (response) {
                     closeLoading();
 
-                    // Estado de la receta cambió externamente
+                    // Receta cambió de estado externamente
                     if (response.data.success === 1) {
                         Swal.fire({
                             title: 'Estado modificado',
@@ -444,12 +446,10 @@
                             confirmButtonText: 'Aceptar',
                             allowOutsideClick: false
                         }).then(function (result) {
-                            if (result.value) {
-                                volverAtras();
-                            }
+                            if (result.value) { volverAtras(); }
                         });
 
-                        // Stock insuficiente para algún medicamento
+                        // Stock insuficiente
                     } else if (response.data.success === 2) {
                         Swal.fire({
                             title: 'Stock insuficiente',
@@ -466,9 +466,7 @@
                                 '<strong>Solicitado:</strong> ' + response.data.cantidadsalida +
                                 '</div>'
                         }).then(function (result) {
-                            if (result.value) {
-                                recargarVista();
-                            }
+                            if (result.value) { recargarVista(); }
                         });
 
                         // Procesado correctamente
@@ -480,9 +478,7 @@
                             confirmButtonText: 'Aceptar',
                             allowOutsideClick: false
                         }).then(function (result) {
-                            if (result.value) {
-                                volverAtras();
-                            }
+                            if (result.value) { volverAtras(); }
                         });
 
                     } else {
@@ -494,5 +490,6 @@
                     toastr.error('Error al registrar');
                 });
         }
+
     </script>
 @endsection

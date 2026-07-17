@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
-     */
+     * REGISTRO DE RECETAS POR CONSULTA MEDICA
+ */
     public function up(): void
     {
         Schema::create('recetas', function (Blueprint $table) {

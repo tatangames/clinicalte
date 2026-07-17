@@ -184,7 +184,7 @@
             z-index: 10;
         }
 
-        /* ── Panel de selección de producto (se carga dinámicamente) ── */
+        /* ── Panel de selección de producto ── */
         #tablaProductos { margin-top: .5rem; }
     </style>
 
@@ -241,7 +241,7 @@
                 {{-- Tabla de lotes cargada dinámicamente --}}
                 <div id="tablaProductos"></div>
 
-                {{-- Botón agregar (oculto hasta que haya producto) --}}
+                {{-- Botón agregar (oculto hasta que cargue producto) --}}
                 <div id="btnAgregarFila" style="display:none; margin-top:.75rem; text-align:right;">
                     <button type="button" class="sm-btn sm-btn-primary" onclick="agregarFila()">
                         <i class="fas fa-plus"></i> Agregar a tabla
@@ -259,13 +259,13 @@
                 <div class="sm-card-icon sm-icon-green"><i class="fas fa-list-ul"></i></div>
                 <span class="sm-card-title">Productos a despachar</span>
                 <span style="
-                margin-left:auto;
-                background:var(--sm-blue-lt); color:var(--sm-blue);
-                padding:2px 10px; border-radius:20px;
-                font-size:11px; font-weight:700;"
+                    margin-left:auto;
+                    background:var(--sm-blue-lt); color:var(--sm-blue);
+                    padding:2px 10px; border-radius:20px;
+                    font-size:11px; font-weight:700;"
                       id="contador-filas">
-                0 ítems
-            </span>
+                    0 ítems
+                </span>
             </div>
 
             <div style="overflow-x:auto;">
@@ -295,7 +295,7 @@
                 </table>
             </div>
 
-            {{-- Observaciones ── --}}
+            {{-- Observaciones --}}
             <div style="padding:1.1rem 1.2rem; border-top:1px solid var(--sm-border);">
                 <label class="sm-label">Observaciones</label>
                 <textarea class="form-control" rows="3" id="text-observaciones"
@@ -303,7 +303,7 @@
                           placeholder="Notas adicionales sobre la salida…"></textarea>
             </div>
 
-            {{-- Footer sticky ── --}}
+            {{-- Footer sticky --}}
             <div class="sm-footer">
                 <div class="sm-total-chip">
                     <i class="fas fa-cubes"></i>
@@ -326,10 +326,13 @@
     <script src="{{ asset('js/select2.min.js') }}" type="text/javascript"></script>
 
     <script>
+
         /* ── Select2 ── */
-        $('#select-producto').select2({
-            theme: 'bootstrap-5',
-            language: { noResults: function () { return 'Sin resultados'; } }
+        $(document).ready(function () {
+            $('#select-producto, #select-motivo').select2({
+                theme: 'bootstrap-5',
+                language: { noResults: function () { return 'Sin resultados'; } }
+            });
         });
 
         /* ── Cargar lotes del producto ── */
@@ -344,7 +347,11 @@
 
             openLoading();
             var ruta = "{{ URL::to('/admin/buscar/producto/salida/farmacia') }}/" + idProducto;
-            $('#tablaProductos').load(ruta);
+
+            $('#tablaProductos').load(ruta, function () {
+                closeLoading();
+                document.getElementById('btnAgregarFila').style.display = 'block';
+            });
         }
 
         /* ── Resaltar filas ── */
@@ -359,21 +366,26 @@
         /* ── Agregar fila al detalle ── */
         function agregarFila() {
             const inputSalidas = document.querySelectorAll('input[name="arraysalida[]"]');
-            var hayItems = true;
+
+            if (inputSalidas.length === 0) {
+                toastr.error('Seleccione un producto primero');
+                return;
+            }
+
+            var agregados = 0;
 
             inputSalidas.forEach(function (valor) {
-                hayItems = false;
+                var inputCantidad = parseInt(valor.value) || 0;
+
+                if (inputCantidad <= 0) return;
 
                 var nombreMedicamento = valor.dataset.nombremedi;
                 var idEntrada         = valor.dataset.identrada;
                 var fechaVencimiento  = valor.dataset.fechavencimiento;
                 var fechaEntrada      = valor.dataset.fechaentrada;
                 var loteEntrada       = valor.dataset.lote;
-                var inputCantidad     = valor.value;
+                var stockDisponible   = valor.dataset.stock || 0;
 
-                if (!inputCantidad || inputCantidad == 0) return;
-
-                // Quitar placeholder vacío
                 var filaVacia = document.getElementById('fila-vacia');
                 if (filaVacia) filaVacia.remove();
 
@@ -383,8 +395,11 @@
                 <tr>
                     <td><span class="sm-row-num" id="fila${nFilas}">${nFilas}</span></td>
                     <td>
-                        <input name="arrayNombre[]" disabled data-identrada="${idEntrada}"
-                               value="${nombreMedicamento}" class="form-control form-control-sm" type="text">
+                        <input name="arrayNombre[]" disabled
+                               data-identrada="${idEntrada}"
+                               data-stock="${stockDisponible}"
+                               value="${nombreMedicamento}"
+                               class="form-control form-control-sm" type="text">
                     </td>
                     <td>
                         <input name="arrayCantidad[]" disabled value="${inputCantidad}"
@@ -412,28 +427,29 @@
                 </tr>`;
 
                 $("#matriz tbody").append(fila);
-                calcularFilas();
-
-                Swal.fire({
-                    position: 'top-end',
-                    type: 'success',
-                    title: 'Agregado',
-                    showConfirmButton: false,
-                    timer: 1200
-                });
-
-                ocultarElecciones();
+                agregados++;
             });
 
-            if (hayItems) {
-                toastr.error('Elija la cantidad de salida primero');
+            if (agregados === 0) {
+                toastr.error('Ingrese al menos una cantidad mayor a 0');
+                return;
             }
+
+            calcularFilas();
+            ocultarElecciones();
+
+            Swal.fire({
+                position: 'top-end',
+                type: 'success',
+                title: agregados + (agregados === 1 ? ' lote agregado' : ' lotes agregados'),
+                showConfirmButton: false,
+                timer: 1200
+            });
         }
 
         /* ── Limpiar selección de producto ── */
         function ocultarElecciones() {
-            document.getElementById('select-producto').selectedIndex = 0;
-            $("#select-producto").trigger("change");
+            $('#select-producto').val('').trigger('change');
             document.getElementById('tablaProductos').innerHTML = '';
             document.getElementById('btnAgregarFila').style.display = 'none';
         }
@@ -471,16 +487,15 @@
 
         /* ── Calcular total ── */
         function calcularFilas() {
-            var cantidades = $("#matriz input[name='arrayCantidad[]']").map(function () {
-                return parseInt($(this).val()) || 0;
-            }).get();
+            var total = 0;
+            $("#matriz input[name='arrayCantidad[]']").each(function () {
+                total += parseInt($(this).val()) || 0;
+            });
 
-            var total = cantidades.reduce(function (acc, v) { return acc + v; }, 0);
             document.getElementById('cantidadTotal').textContent = total;
 
             var n = $('#matriz > tbody > tr:not(#fila-vacia)').length;
-            document.getElementById('contador-filas').textContent =
-                n + (n === 1 ? ' ítem' : ' ítems');
+            document.getElementById('contador-filas').textContent = n + (n === 1 ? ' ítem' : ' ítems');
         }
 
         /* ── Confirmar guardar ── */
@@ -504,10 +519,10 @@
 
         /* ── Registrar ── */
         function registrarMedicamento() {
-            var motivo       = document.getElementById('select-motivo').value;
-            var fecha        = document.getElementById('fecha-salida').value;
-            var observaciones= document.getElementById('text-observaciones').value;
-            var reglaEntero  = /^[0-9]\d*$/;
+            var motivo        = document.getElementById('select-motivo').value;
+            var fecha         = document.getElementById('fecha-salida').value;
+            var observaciones = document.getElementById('text-observaciones').value;
+            var reglaEntero   = /^[0-9]\d*$/;
 
             if (!motivo) { toastr.error('El motivo es requerido'); return; }
             if (!fecha)  { toastr.error('La fecha de salida es requerida'); return; }
@@ -518,6 +533,7 @@
             var arrayIdEntrada = $("input[name='arrayNombre[]']").map(function () {
                 return $(this).data('identrada');
             }).get();
+
             var arrayCantidad = $("#matriz input[name='arrayCantidad[]']").map(function () {
                 return $(this).val();
             }).get();
@@ -525,10 +541,11 @@
             colorBlancoTabla();
 
             for (var a = 0; a < arrayIdEntrada.length; a++) {
-                var idE  = arrayIdEntrada[a];
-                var cant = arrayCantidad[a];
+                var idE       = arrayIdEntrada[a];
+                var cant      = arrayCantidad[a];
+                var stockDisp = parseInt($("input[name='arrayNombre[]']").eq(a).data('stock')) || 0;
 
-                if (idE == 0) {
+                if (!idE || idE == 0) {
                     colorRojoTabla(a);
                     alertaMensaje('info', 'No encontrado',
                         'Fila #' + (a + 1) + ': el producto no se encontró. Borre la fila y búsquelo de nuevo.');
@@ -549,13 +566,21 @@
                     toastr.error('Fila #' + (a + 1) + ': cantidad máxima 9 millones.');
                     return;
                 }
+                if (stockDisp > 0 && parseInt(cant) > stockDisp) {
+                    colorRojoTabla(a);
+                    toastr.error('Fila #' + (a + 1) + ': cantidad supera el stock disponible (' + stockDisp + ').');
+                    return;
+                }
             }
 
             openLoading();
 
             var contenedor = [];
             for (var i = 0; i < arrayIdEntrada.length; i++) {
-                contenedor.push({ infoIdEntrada: arrayIdEntrada[i], infoCantidad: arrayCantidad[i] });
+                contenedor.push({
+                    infoIdEntrada: arrayIdEntrada[i],
+                    infoCantidad:  arrayCantidad[i]
+                });
             }
 
             var fd = new FormData();
@@ -569,8 +594,8 @@
                     closeLoading();
 
                     if (response.data.success === 1) {
-                        var fila      = response.data.fila;
-                        var cantHay   = response.data.cantidad;
+                        var fila    = response.data.fila;
+                        var cantHay = response.data.cantidad;
                         colorRojoTabla(fila - 1);
 
                         Swal.fire({
@@ -585,22 +610,25 @@
                     } else if (response.data.success === 2) {
                         toastr.success('Salida registrada correctamente');
                         limpiar();
+
                     } else {
                         toastr.error('Error al guardar');
                     }
                 })
-                .catch(function () { closeLoading(); toastr.error('Error al guardar'); });
+                .catch(function () {
+                    closeLoading();
+                    toastr.error('Error al guardar');
+                });
         }
 
         /* ── Limpiar todo ── */
         function limpiar() {
-            document.getElementById('select-producto').selectedIndex = 0;
-            $("#select-producto").trigger("change");
-            document.getElementById('select-motivo').selectedIndex = 0;
-            document.getElementById('tablaProductos').innerHTML = '';
+            $('#select-motivo').val('').trigger('change');
+            $('#select-producto').val('').trigger('change');
+            document.getElementById('tablaProductos').innerHTML  = '';
             document.getElementById('btnAgregarFila').style.display = 'none';
-            document.getElementById('fecha-salida').value = '';
-            document.getElementById('text-observaciones').value = '';
+            document.getElementById('fecha-salida').value        = '';
+            document.getElementById('text-observaciones').value  = '';
 
             $('#matriz tbody').html(`
             <tr id="fila-vacia">
@@ -613,8 +641,9 @@
                 </td>
             </tr>`);
 
-            document.getElementById('cantidadTotal').textContent = '0';
+            document.getElementById('cantidadTotal').textContent  = '0';
             document.getElementById('contador-filas').textContent = '0 ítems';
         }
+
     </script>
 @endsection

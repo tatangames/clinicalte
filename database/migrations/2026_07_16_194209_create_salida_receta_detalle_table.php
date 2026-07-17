@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
-     */
+     * DETALLE DE LA SALIDA DE MEDICAMENTO DE LA RECETA
+ */
     public function up(): void
     {
         Schema::create('salida_receta_detalle', function (Blueprint $table) {

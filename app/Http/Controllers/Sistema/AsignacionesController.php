@@ -329,7 +329,6 @@ class AsignacionesController extends Controller
 
         if ($validar->fails()){ return ['success' => 0];}
 
-
         ConsultaPaciente::where('id', $request->idconsulta)->update([
             'estado_paciente' => 2, // consulta finalizada
         ]);

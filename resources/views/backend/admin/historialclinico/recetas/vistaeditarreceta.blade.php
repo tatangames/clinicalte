@@ -37,6 +37,16 @@
 
 @section('content')
 
+    @php
+        // Mapa de estados: número → etiqueta legible
+        $estadoLabels = [
+            1 => 'Pendiente',
+            2 => 'Procesada',
+            3 => 'Denegada',
+        ];
+        $estadoLabel = $estadoLabels[$infoReceta->estado] ?? 'Desconocido';
+    @endphp
+
     <style>
         :root {
             --rx-blue:     #1a6fc4;
@@ -81,8 +91,10 @@
             padding: 4px 12px; border-radius: 20px;
             font-size: 11px; font-weight: 700;
         }
-        .rx-estado-activo   { background: var(--rx-green-lt); color: var(--rx-green); }
-        .rx-estado-inactivo { background: #fde8e6; color: var(--rx-red); }
+        .rx-estado-activo    { background: var(--rx-green-lt); color: var(--rx-green); }
+        .rx-estado-inactivo  { background: #fde8e6; color: var(--rx-red); }
+        .rx-estado-procesada { background: var(--rx-blue-lt); color: var(--rx-blue); }
+        .rx-estado-denegada  { background: #fde8e6; color: var(--rx-red); }
 
         /* ── Secciones ── */
         .rx-section {
@@ -265,7 +277,8 @@
         @if($infoReceta->estado != 1)
             <div class="rx-readonly-notice">
                 <i class="fas fa-lock"></i>
-                <span>Esta receta está en estado <strong>{{ $infoReceta->estado }}</strong> y no puede modificarse.</span>
+                {{-- FIX: mostrar etiqueta legible en lugar del número --}}
+                <span>Esta receta está en estado <strong>{{ $estadoLabel }}</strong> y no puede modificarse.</span>
             </div>
         @endif
 
@@ -277,11 +290,26 @@
                 <p class="rx-patient-name">{{ $nombreCompleto }}</p>
             </div>
             <div class="ml-auto d-flex align-items-center gap-2" style="gap:8px">
+
+                {{-- FIX: badge de estado con etiqueta e ícono según valor --}}
                 @if($infoReceta->estado == 1)
-                    <span class="rx-estado-badge rx-estado-activo"><i class="fas fa-circle" style="font-size:7px"></i> Activa</span>
+                    <span class="rx-estado-badge rx-estado-activo">
+                        <i class="fas fa-circle" style="font-size:7px"></i> Pendiente
+                    </span>
+                @elseif($infoReceta->estado == 2)
+                    <span class="rx-estado-badge rx-estado-procesada">
+                        <i class="fas fa-check-circle" style="font-size:10px"></i> Procesada
+                    </span>
+                @elseif($infoReceta->estado == 3)
+                    <span class="rx-estado-badge rx-estado-denegada">
+                        <i class="fas fa-times-circle" style="font-size:10px"></i> Denegada
+                    </span>
                 @else
-                    <span class="rx-estado-badge rx-estado-inactivo"><i class="fas fa-circle" style="font-size:7px"></i> {{ $infoReceta->estado }}</span>
+                    <span class="rx-estado-badge rx-estado-inactivo">
+                        <i class="fas fa-circle" style="font-size:7px"></i> {{ $estadoLabel }}
+                    </span>
                 @endif
+
                 <span class="rx-badge rx-badge-amber"><i class="fas fa-edit mr-1"></i>Editar receta</span>
             </div>
         </div>

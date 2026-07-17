@@ -25,5 +25,8 @@ class Receta extends Model
         'id_usuario_estado'
     ];
 
-
+    public function usuario()
+    {
+        return $this->belongsTo(Usuario::class, 'id_usuario');
+    }
 }

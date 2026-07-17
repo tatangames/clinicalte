@@ -252,131 +252,130 @@ class SalidaRecetaController extends Controller
         return ['success' => 1];
     }
 
-    public function vistaRecetaDetalleProcesar($idreceta){
+    public function vistaRecetaDetalleProcesar($idreceta)
+    {
+        $infoReceta   = Receta::findOrFail($idreceta);
+        $infoConsulta = ConsultaPaciente::findOrFail($infoReceta->id_consulta);
+        $infoPaciente = Paciente::findOrFail($infoConsulta->id_paciente);
 
-        $infoReceta = Receta::where('id', $idreceta)->first();
-
-        $infoConsulta = ConsultaPaciente::where('id', $infoReceta->id_consulta)->first();
-
-        $infoPaciente = Paciente::where('id', $infoConsulta->id_paciente)->first();
-
-        $nombreCompleto = $infoPaciente->nombres . " " . $infoPaciente->apellidos;
-
-        $infoUsuario = Usuario::where('id', $infoReceta->id_usuario)->first();
-
-        $nombreDoctor = $infoUsuario->nombre;
-
-        $fechaReceta = date("d-m-Y", strtotime($infoReceta->fecha));
-
-        $edad = Carbon::parse($infoPaciente->fecha_nacimiento)->age;
+        $nombreCompleto = $infoPaciente->nombres . ' ' . $infoPaciente->apellidos;
+        $nombreDoctor   = Usuario::where('id', $infoReceta->id_usuario)->value('nombre');
+        $fechaReceta    = \Carbon\Carbon::parse($infoReceta->fecha)->format('d-m-Y');
+        $edad           = \Carbon\Carbon::parse($infoPaciente->fecha_nacimiento)->age;
 
         $arrayNombreMedicamento = DB::table('recetas_detalle AS rd')
             ->join('entrada_medicamento_detalle AS enta', 'rd.id_entrada_detalle', '=', 'enta.id')
             ->join('farmacia_articulo AS fama', 'enta.id_medicamento', '=', 'fama.id')
-            ->select('fama.nombre', 'rd.id', 'rd.id_recetas', 'enta.fecha_vencimiento', 'rd.cantidad', 'enta.lote', 'enta.cantidad AS cantidadActual',
-                'rd.cantidad AS cantidadRetirar')
+            ->select(
+                'fama.nombre',
+                'rd.id',
+                'rd.id_recetas',
+                'rd.id_entrada_detalle',
+                'enta.fecha_vencimiento',
+                'rd.cantidad AS cantidadRetirar',
+                'enta.lote',
+                'enta.cantidad AS cantidad_entrada'
+            )
             ->where('rd.id_recetas', $idreceta)
-            ->orderBy('fama.nombre', 'ASC')
+            ->orderBy('fama.nombre')
             ->get();
 
+        // Stock real: entradas - salidas previas de cada lote, en un solo query
+        $ids = $arrayNombreMedicamento->pluck('id_entrada_detalle');
+
+        $salidas = DB::table('salida_receta_detalle')
+            ->whereIn('id_entrada_detalle', $ids)
+            ->select('id_entrada_detalle', DB::raw('SUM(cantidad) as total_salida'))
+            ->groupBy('id_entrada_detalle')
+            ->pluck('total_salida', 'id_entrada_detalle');
+
         $contador = 0;
-        foreach ($arrayNombreMedicamento as $info){
+        foreach ($arrayNombreMedicamento as $info) {
             $contador++;
-            $info->contador = $contador;
-
-            $info->nombreFormat = $info->nombre;
-
-            $info->fechaVencimiento = date("d-m-Y", strtotime($info->fecha_vencimiento));
+            $info->contador         = $contador;
+            $info->nombreFormat     = $info->nombre;
+            $info->fechaVencimiento = \Carbon\Carbon::parse($info->fecha_vencimiento)->format('d-m-Y');
+            $totalSalida            = $salidas[$info->id_entrada_detalle] ?? 0;
+            $info->cantidadActual   = $info->cantidad_entrada - $totalSalida;
         }
 
-        return view('backend.admin.farmacia.salidareceta.procesar.vistaprocesarreceta', compact('idreceta',
-            'infoPaciente', 'nombreCompleto', 'nombreDoctor', 'fechaReceta', 'edad', 'arrayNombreMedicamento',
+        return view('backend.admin.farmacia.salidareceta.procesar.vistaprocesarreceta', compact(
+            'idreceta', 'infoPaciente', 'nombreCompleto',
+            'nombreDoctor', 'fechaReceta', 'edad', 'arrayNombreMedicamento'
         ));
     }
 
 
-    public function guardarSalidaProcesadaDeReceta(Request $request){
-
-        $regla = array(
-            'idreceta' => 'required',
-        );
-
-        $validar = Validator::make($request->all(), $regla);
-
-        if ($validar->fails()){ return ['success' => 0];}
-
+    public function guardarSalidaProcesadaDeReceta(Request $request)
+    {
+        $validar = Validator::make($request->all(), ['idreceta' => 'required']);
+        if ($validar->fails()) { return ['success' => 0]; }
 
         DB::beginTransaction();
 
         try {
+            $infoReceta = Receta::where('id', $request->idreceta)->lockForUpdate()->first();
 
-            $infoReceta = Receta::where('id', $request->idreceta)->first();
-
-            if($infoReceta->estado != '1'){
+            if ($infoReceta->estado != 1) {
+                DB::rollback();
                 return ['success' => 1];
             }
 
             $usuario = auth()->user();
-            $fechaCarbon = Carbon::parse(Carbon::now());
 
-            $salida = new SalidaReceta();
+            $salida             = new SalidaReceta();
             $salida->id_recetas = $request->idreceta;
             $salida->id_usuario = $usuario->id;
-            $salida->fecha = $fechaCarbon;
-            $salida->notas = $request->notas;
+            $salida->fecha      = \Carbon\Carbon::now();
+            $salida->notas      = $request->notas;
             $salida->save();
-
-            // LISTADO DE RECETAS DETALLE
 
             $arrayDetalle = RecetaDetalle::where('id_recetas', $request->idreceta)->get();
 
-            // RESTAR ENTRADA DETALLE
             foreach ($arrayDetalle as $filaArray) {
 
-                $infoEntradaDeta = EntradaMedicamentoDetalle::where('id', $filaArray->id_entrada_detalle)->first();
+                $infoEntradaDeta = EntradaMedicamentoDetalle::where('id', $filaArray->id_entrada_detalle)
+                    ->lockForUpdate()
+                    ->first();
 
-                // RESTAR
+                // Stock real = entrada original - todo lo ya despachado de este lote
+                $totalSalidas = SalidaRecetaDetalle::where('id_entrada_detalle', $infoEntradaDeta->id)
+                    ->sum('cantidad');
 
-                $resta = $infoEntradaDeta->cantidad - $filaArray->cantidad;
+                $stockReal = $infoEntradaDeta->cantidad - $totalSalidas;
 
-                if($resta < 0){
-                    // se esta restando de mas a esta entrada
+                if ($stockReal < $filaArray->cantidad) {
+                    DB::rollback();
 
-                    $infoMedicamento = FarmaciaArticulo::where('id', $infoEntradaDeta->id_medicamento)->first();
+                    $infoMedicamento  = FarmaciaArticulo::where('id', $infoEntradaDeta->id_medicamento)->first();
+                    $fechaVencimiento = \Carbon\Carbon::parse($infoEntradaDeta->fecha_vencimiento)->format('d-m-Y');
 
-                    $fechaVencimiento = date("d-m-Y", strtotime($infoEntradaDeta->fecha_vencimiento));
-
-                    return ['success' => 2, 'nombre' => $infoMedicamento->nombre,
-                        'cantidadhay' => $infoEntradaDeta->cantidad,
-                        'lote' => $infoEntradaDeta->lote,
+                    return [
+                        'success'          => 2,
+                        'nombre'           => $infoMedicamento->nombre,
+                        'cantidadhay'      => $stockReal,
+                        'lote'             => $infoEntradaDeta->lote,
                         'fechavencimiento' => $fechaVencimiento,
-                        'cantidadsalida' => $filaArray->cantidad];
+                        'cantidadsalida'   => $filaArray->cantidad,
+                    ];
                 }
 
-                EntradaMedicamentoDetalle::where('id', $filaArray->id_entrada_detalle)->update([
-                    'cantidad' => $resta
-                ]);
-
-
-                $newDetalle = new SalidaRecetaDetalle();
+                // Registrar salida — NO mutar entrada_medicamento_detalle
+                $newDetalle                  = new SalidaRecetaDetalle();
                 $newDetalle->id_salidareceta = $salida->id;
                 $newDetalle->id_entrada_detalle = $filaArray->id_entrada_detalle;
-                $newDetalle->cantidad = $filaArray->cantidad;
+                $newDetalle->cantidad        = $filaArray->cantidad;
                 $newDetalle->save();
             }
 
-            // actualizar estado
-
-            Receta::where('id', $request->idreceta)->update([
-                'estado' => 2 // PROCESADO
-            ]);
+            Receta::where('id', $request->idreceta)->update(['estado' => 2]);
 
             DB::commit();
             return ['success' => 3];
 
-        }catch(\Throwable $e){
+        } catch (\Throwable $e) {
             DB::rollback();
-            Log::info('err ' . $e);
+            Log::error('guardarSalidaProcesadaDeReceta: ' . $e);
             return ['success' => 99];
         }
     }

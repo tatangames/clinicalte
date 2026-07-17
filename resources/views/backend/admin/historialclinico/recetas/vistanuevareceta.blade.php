@@ -588,7 +588,7 @@
             var fd = new FormData();
             fd.append('nombre', nombre);
 
-            axios.post(urlAdmin + '/vias/guardar/getlistado/completo', fd)
+            axios.post(urlAdmin + '/admin/vias/guardar/getlistado/completo', fd)
                 .then(res => {
                     closeLoading();
                     if (res.data.success === 1) {

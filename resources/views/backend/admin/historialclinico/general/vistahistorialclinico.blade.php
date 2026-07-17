@@ -379,8 +379,9 @@
 
         /* ─── Config toolbar CKEditor (compartida) ─── */
         const ckToolbar = {
-            items: ['heading','|','bold','italic','underline','strikethrough',
-                '|','numberedList','bulletedList','|','alignment','|','undo','redo']
+            items: ['heading','|','bold','italic',
+                '|','numberedList','bulletedList',
+                '|','undo','redo']
         };
 
         /* ─── Inicialización ─── */
@@ -455,7 +456,7 @@
             var formData = new FormData();
             formData.append('idconsulta', IDCONSULTA);
 
-            axios.post(url + '/asignaciones/finalizar/consulta', formData)
+            axios.post(urlAdmin + '/admin/asignaciones/finalizar/consulta', formData)
                 .then(function (response) {
                     closeLoading();
                     if (response.data.success === 1) {
@@ -491,7 +492,7 @@
             formData.append('nombre', nombre);
             formData.append('descripcion', descripcion);
 
-            axios.post(url + '/diagnosticos/guardar/getlistado/completo', formData)
+            axios.post(urlAdmin + '/admin/diagnosticos/guardar/getlistado/completo', formData)
                 .then(function (response) {
                     closeLoading();
                     if (response.data.success === 1) {

@@ -19,6 +19,7 @@ use App\Http\Controllers\Sistema\RecetasController;
 use App\Http\Controllers\Sistema\ReportesController;
 use App\Http\Controllers\Sistema\SalidaRecetaController;
 use App\Http\Controllers\Sistema\SalidaManualController;
+use App\Http\Controllers\Sistema\DiagnosticoController;
 
 
 Route::get('/', [LoginController::class,'vistaLoginForm'])->name('login.admin');
@@ -353,6 +354,10 @@ Route::middleware('auth:admin')->group(function () {
     Route::post('/admin/registrar/orden/salida/medicamento', [SalidaManualController::class, 'registrarOrdenSalidaFarmacia']);
     Route::get('/admin/buscar/producto/salida/farmacia/{idproducto}', [SalidaManualController::class,'elegirProductoParaSalida']);
 
+    // listado de array de diagnosticos
+    Route::post('/admin/diagnosticos/guardar/getlistado/completo', [DiagnosticoController::class, 'registroExtraDiagnostico']);
+    // listado de array de vias
+    Route::post('/admin/vias/guardar/getlistado/completo', [DiagnosticoController::class, 'registroExtraVia']);
 
 
 

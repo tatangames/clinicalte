@@ -232,6 +232,7 @@ class HistorialClinicoController extends Controller
     }
 
 
+
     public function registrarAntropometria(Request $request){
 
         $regla = array(
@@ -349,28 +350,28 @@ class HistorialClinicoController extends Controller
             'nombreCompleto', 'idconsulta', 'infoAntrop'));
     }
 
-    function bloqueHistorialRecetas($idconsulta){
+    function bloqueHistorialRecetas($idconsulta)
+    {
+        $infoConsulta = ConsultaPaciente::select('id_paciente')
+            ->findOrFail($idconsulta);
 
-        $infoConsulta = ConsultaPaciente::where('id', $idconsulta)->first();
-        $arrayRecetas = Receta::where('id_paciente', $infoConsulta->id_paciente)
+        $arrayRecetas = Receta::with('usuario:id,nombre')
+            ->where('id_paciente', $infoConsulta->id_paciente)
             ->orderBy('fecha')
             ->get();
 
-        foreach ($arrayRecetas as $dato){
-            $dato->fechaFormat = date("d-m-Y", strtotime($dato->fecha));
-            $dato->fechaProFormat = date("d-m-Y", strtotime($dato->proxima_cita));
-
-            $infoUsuario = Usuario::where('id', $dato->id_usuario)->first();
-            $dato->nombreusuario = $infoUsuario->nombre;
+        foreach ($arrayRecetas as $dato) {
+            $dato->fechaFormat    = \Carbon\Carbon::parse($dato->fecha)->format('d-m-Y');
+            $dato->fechaProFormat = $dato->proxima_cita
+                ? \Carbon\Carbon::parse($dato->proxima_cita)->format('d-m-Y')
+                : '—';
+            $dato->nombreusuario = $dato->usuario->nombre ?? '';
         }
 
-        // mostrar boton
-        $existeReceta = 0;
-        if(Receta::where('id_consulta', $idconsulta)->first()){
-            $existeReceta = 1;
-        }
+        $existeReceta = $arrayRecetas->where('id_consulta', $idconsulta)->isNotEmpty() ? 1 : 0;
 
-        return view('backend.admin.historialclinico.bloques.bloquerecetas', compact('arrayRecetas', 'existeReceta'));
+        return view('backend.admin.historialclinico.bloques.bloquerecetas',
+            compact('arrayRecetas', 'existeReceta'));
     }
 
 

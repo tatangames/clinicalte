@@ -95,7 +95,7 @@
                 var sel = document.getElementById('select-tipo-diagnostico-editar');
                 sel.options.length = 0;
                 $.each(d.arraydiagnostico, function (k, v) {
-                    sel.add(new Option(v.nombre, v.id, false, d.info.diagnostico_id == v.id));
+                    sel.add(new Option(v.nombre, v.id, false, d.info.id_diagnostico == v.id));
                 });
                 $('#select-tipo-diagnostico-editar').trigger('change');
 

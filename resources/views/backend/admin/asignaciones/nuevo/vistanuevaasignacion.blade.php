@@ -50,7 +50,7 @@
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h4 class="mb-0 font-weight-bold">Asignación de Salas</h4>
                 <div class="d-flex align-items-center">
-                    <img src="{{ asset('images/cronometro2.png') }}" width="28" height="28" class="mr-2" alt="Contador">
+                    <img src="{{ asset('images/cronometro_gris.png') }}" width="28" height="28" class="mr-2" alt="Contador">
                     <span id="contador" class="font-weight-bold mr-3 text-secondary"></span>
                     <button type="button" class="btn btn-primary btn-sm" onclick="modalAgregar()">
                         <i class="fas fa-plus mr-1"></i> Nueva Asignación
