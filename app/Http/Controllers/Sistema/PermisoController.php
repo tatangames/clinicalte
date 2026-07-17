@@ -128,13 +128,7 @@ class PermisoController extends Controller
 
     public function borrarPermisoGlobal(Request $request){
 
-        try {
-            $permission = Permission::findById($request->idpermiso, 'admin');
-            $permission->delete();
 
-            return ['success' => 1];
-        } catch (\Spatie\Permission\Exceptions\PermissionDoesNotExist $e) {
-            return ['success' => 2]; // permiso no existe
-        }
+        return ['success' => 1];
     }
 }
