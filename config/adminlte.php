@@ -479,7 +479,19 @@ return [
             ],
         ],
 
+        [
+            'text'    => 'Reportes',
+            'icon'    => 'fas fa-pen-alt',
+            'can'     => 'sidebar.reportes',
+            'submenu' => [
+                [
+                    'text' => 'General',
+                    'icon' => 'far fa-circle',
+                    'route' => 'admin.reportes.general.index',
+                ],
 
+            ],
+        ],
 
     ],
 

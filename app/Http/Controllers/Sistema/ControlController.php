@@ -17,22 +17,22 @@ class ControlController extends Controller
         }
 
         // Inventario
-        else  if($user->hasRole('archivo')){
+        else if($user->hasRole('archivo')){
             return redirect()->route('admin.asignaciones.index');
         }
 
         // Enfermeria
-        else  if($user->hasRole('enfermeria')){
+        else if($user->hasRole('enfermeria')){
             return redirect()->route('admin.asignaciones.index');
         }
 
         // Doctora
-        else  if($user->hasRole('doctora')){
+        else if($user->hasRole('doctora')){
             return redirect()->route('admin.asignaciones.index');
         }
 
         // Farmacia
-        else  if($user->hasRole('farmacia')){
+        else if($user->hasRole('farmacia')){
             return redirect()->route('admin.asignaciones.index');
         }
 

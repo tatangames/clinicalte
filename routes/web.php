@@ -361,8 +361,14 @@ Route::middleware('auth:admin')->group(function () {
 
 
 
+    // --- REPORTES ---
+
+    Route::get('/admin/reportes/general/index', [ReportesController::class,'indexReportesGeneral'])->name('admin.reportes.general.index');
+    Route::get('/admin/existencia/pdf/generar', [ReportesController::class, 'generarPdfExistencias']);
 
 
+    Route::get('/admin/pdf/reporte/finalv2/{desde}/{hasta}/{soloExistencia?}', [ReportesController::class, 'generarReporteFinalv2'])->name('admin.pdf.reporte.finalv2');
+    Route::get('/admin/pdf/movimientos/{id}/{desde?}/{hasta?}', [ReportesController::class, 'movimientosMedicamento'])->name('admin.pdf.movimientos');
 
 
 
