@@ -33,7 +33,7 @@ class ControlController extends Controller
 
         // Farmacia
         else if($user->hasRole('farmacia')){
-            return redirect()->route('admin.asignaciones.index');
+            return redirect()->route('admin.salida.recetas.farmacia.index');
         }
 
         return redirect()->route('no.permisos.index');
