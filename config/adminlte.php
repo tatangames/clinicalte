@@ -356,7 +356,7 @@ return [
         [
             'text'    => 'Configuración',
             'icon'    => 'fas fa-pen-alt',
-
+            'can'     => 'sidebar.configuracion',
             'submenu' => [
                 [
                     'text' => 'Tipo Paciente',
