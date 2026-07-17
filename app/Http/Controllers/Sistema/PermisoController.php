@@ -128,6 +128,16 @@ class PermisoController extends Controller
 
     public function borrarPermisoGlobal(Request $request){
 
+        // Buscar directamente en la tabla sin depender del guard cache de Spatie
+        $permission = Permission::where('id', $request->idpermiso)
+            ->where('guard_name', 'admin')
+            ->first();
+
+        if (!$permission) {
+            return ['success' => 2]; // no encontrado
+        }
+
+        $permission->delete();
 
         return ['success' => 1];
     }
