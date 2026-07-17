@@ -199,16 +199,6 @@
             <div class="sm-card-body">
                 <div class="row">
 
-                    <div class="col-md-4 mb-3">
-                        <label class="sm-label">Motivo <span class="text-danger">*</span></label>
-                        <select class="form-control" id="select-motivo">
-                            <option value="">Seleccionar…</option>
-                            @foreach($arrayMotivo as $item)
-                                <option value="{{ $item->id }}">{{ $item->nombre }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
                     <div class="col-md-3 mb-3">
                         <label class="sm-label">Fecha de salida <span class="text-danger">*</span></label>
                         <input type="date" class="form-control" id="fecha-salida" autocomplete="off">
@@ -329,7 +319,7 @@
 
         /* ── Select2 ── */
         $(document).ready(function () {
-            $('#select-producto, #select-motivo').select2({
+            $('#select-producto').select2({
                 theme: 'bootstrap-5',
                 language: { noResults: function () { return 'Sin resultados'; } }
             });
@@ -487,7 +477,7 @@
                     <td colspan="7">
                         <div class="sm-empty">
                             <i class="fas fa-box-open"></i>
-                            Aún no se han agregado productos.<br>
+                            Aún no se han agregados productos.<br>
                             <small>Busca un producto y presiona "Agregar a tabla".</small>
                         </div>
                     </td>
@@ -531,13 +521,11 @@
 
         /* ── Registrar ── */
         function registrarMedicamento() {
-            var motivo        = document.getElementById('select-motivo').value;
             var fecha         = document.getElementById('fecha-salida').value;
             var observaciones = document.getElementById('text-observaciones').value;
             var reglaEntero   = /^[0-9]\d*$/;
 
-            if (!motivo) { toastr.error('El motivo es requerido'); return; }
-            if (!fecha)  { toastr.error('La fecha de salida es requerida'); return; }
+            if (!fecha) { toastr.error('La fecha de salida es requerida'); return; }
 
             var nRegistro = $('#matriz > tbody > tr:not(#fila-vacia)').length;
             if (nRegistro <= 0) { toastr.error('Agregue al menos un producto'); return; }
@@ -597,7 +585,6 @@
 
             var fd = new FormData();
             fd.append('contenedorArray', JSON.stringify(contenedor));
-            fd.append('motivo',          motivo);
             fd.append('fecha',           fecha);
             fd.append('observaciones',   observaciones);
 

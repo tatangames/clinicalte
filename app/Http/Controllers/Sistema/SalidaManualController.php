@@ -30,7 +30,6 @@ class SalidaManualController extends Controller
 
     public function indexSalidaFarmacia()
     {
-        $arrayMotivo = MotivoFarmacia::orderBy('nombre')->get();
 
         // Stock real por medicamento: cantidad_fija (entrada) - salidas despachadas
         $stockPorMedicamento = EntradaMedicamentoDetalle::select(
@@ -67,14 +66,13 @@ class SalidaManualController extends Controller
         }
 
         return view('backend.admin.farmacia.salidamanual.vistaordensalidamanual',
-            compact('arrayMotivo', 'arrayProducto'));
+            compact('arrayProducto'));
     }
 
 
     public function registrarOrdenSalidaFarmacia(Request $request)
     {
         $validar = Validator::make($request->all(), [
-            'motivo' => 'required',
             'fecha'  => 'required'
         ]);
 
@@ -94,7 +92,6 @@ class SalidaManualController extends Controller
             $orden              = new SalidaReceta();
             $orden->id_recetas  = null;
             $orden->id_usuario  = $usuario->id;
-            $orden->id_motivo   = $request->motivo;
             $orden->fecha       = $fechaHora;
             $orden->notas       = $request->observaciones;
             $orden->tipo_salida = 'manual';
