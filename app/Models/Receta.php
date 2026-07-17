@@ -29,4 +29,9 @@ class Receta extends Model
     {
         return $this->belongsTo(Usuario::class, 'id_usuario');
     }
+
+    public function diagnostico()
+    {
+        return $this->belongsTo(Diagnostico::class, 'id_diagnostico');
+    }
 }

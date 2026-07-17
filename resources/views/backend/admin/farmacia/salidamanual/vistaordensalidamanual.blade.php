@@ -354,6 +354,18 @@
             });
         }
 
+        /* ── Recargar opciones del select de productos desde el servidor ── */
+        function recargarSelectProductos() {
+            axios.get(urlAdmin + '/admin/salida/farmacia/index')
+                .then(function (response) {
+                    // Recarga completa de la página para reflejar stock actualizado
+                    location.reload();
+                })
+                .catch(function () {
+                    // Si falla el reload, al menos limpia la UI
+                });
+        }
+
         /* ── Resaltar filas ── */
         function colorRojoTabla(index) {
             $("#matriz tr:eq(" + (index + 1) + ")").css('background', '#fde8e6');
@@ -609,7 +621,10 @@
 
                     } else if (response.data.success === 2) {
                         toastr.success('Salida registrada correctamente');
-                        limpiar();
+                        // ✅ Recargar página para reflejar stock actualizado en el select
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1200);
 
                     } else {
                         toastr.error('Error al guardar');
@@ -619,30 +634,6 @@
                     closeLoading();
                     toastr.error('Error al guardar');
                 });
-        }
-
-        /* ── Limpiar todo ── */
-        function limpiar() {
-            $('#select-motivo').val('').trigger('change');
-            $('#select-producto').val('').trigger('change');
-            document.getElementById('tablaProductos').innerHTML  = '';
-            document.getElementById('btnAgregarFila').style.display = 'none';
-            document.getElementById('fecha-salida').value        = '';
-            document.getElementById('text-observaciones').value  = '';
-
-            $('#matriz tbody').html(`
-            <tr id="fila-vacia">
-                <td colspan="7">
-                    <div class="sm-empty">
-                        <i class="fas fa-box-open"></i>
-                        Aún no se han agregado productos.<br>
-                        <small>Busca un producto y presiona "Agregar a tabla".</small>
-                    </div>
-                </td>
-            </tr>`);
-
-            document.getElementById('cantidadTotal').textContent  = '0';
-            document.getElementById('contador-filas').textContent = '0 ítems';
         }
 
     </script>

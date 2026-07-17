@@ -80,10 +80,11 @@
 
     <div style="margin-bottom:.5rem; font-size:11px; font-weight:700;
                 color:#6c757d; text-transform:uppercase; letter-spacing:.05em;">
-        {{ $conteo }} {{ $conteo == 1 ? 'lote disponible' : 'lotes disponibles' }} — ingresa la cantidad a retirar por lote
+        {{ count($resultado) }} {{ count($resultado) == 1 ? 'lote disponible' : 'lotes disponibles' }} — ingresa la cantidad a retirar por lote
     </div>
 
-    @foreach($arraySalidas as $dato)
+    {{-- ✅ $resultado en lugar de $arraySalidas --}}
+    @foreach($resultado as $dato)
         <div class="lote-card">
 
             {{-- Encabezado con metadatos del lote --}}
@@ -113,15 +114,16 @@
                     @if($dato->precio)
                         <span class="lote-pill lote-pill-gray">
                             <i class="fas fa-tag" style="font-size:9px"></i>
-                            $ {{ $dato->precio }}
+                            {{ $dato->precio }}
                         </span>
                     @endif
 
                 </div>
 
-                <span class="lote-stock {{ $dato->cantidad == 0 ? 'lote-stock-zero' : '' }}">
+                {{-- ✅ stockReal en lugar de cantidad --}}
+                <span class="lote-stock">
                     <i class="fas fa-boxes" style="font-size:11px"></i>
-                    {{ $dato->cantidad }} disponibles
+                    {{ $dato->stockReal }} disponibles
                 </span>
             </div>
 
@@ -132,25 +134,19 @@
                        name="arraysalida[]"
                        type="number"
                        min="1"
-                       max="{{ $dato->cantidad }}"
+                       max="{{ $dato->stockReal }}"
                        step="1"
                        placeholder="0"
                        value=""
-                       {{ $dato->cantidad == 0 ? 'disabled' : '' }}
                        data-identrada="{{ $dato->identradadetalle }}"
                        data-nombremedi="{{ $dato->nombre }}"
-                       data-maxcantidad="{{ $dato->cantidad }}"
+                       data-maxcantidad="{{ $dato->stockReal }}"
+                       data-stock="{{ $dato->stockReal }}"
                        data-fechavencimiento="{{ $dato->fechaVencimiento }}"
                        data-fechaentrada="{{ $dato->fechaEntrada }}"
                        data-lote="{{ $dato->lote }}"
                        oninput="verificarInputCantidad(this)"
                        onkeyup="this.value=this.value.replace(/[^\d]/,'')">
-
-                @if($dato->cantidad == 0)
-                    <span style="font-size:12px; color:#c0392b; font-weight:600;">
-                        <i class="fas fa-exclamation-circle mr-1"></i>Sin stock
-                    </span>
-                @endif
             </div>
 
         </div>

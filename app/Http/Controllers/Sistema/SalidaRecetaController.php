@@ -265,7 +265,7 @@ class SalidaRecetaController extends Controller
 
         $arrayNombreMedicamento = DB::table('recetas_detalle AS rd')
             ->join('entrada_medicamento_detalle AS enta', 'rd.id_entrada_detalle', '=', 'enta.id')
-            ->join('farmacia_articulo AS fama', 'enta.id_medicamento', '=', 'fama.id')
+            ->join('farmacia_articulo AS fama', 'enta.id_medicamento', '=', 'fama.id') // ✅ nombre real
             ->select(
                 'fama.nombre',
                 'rd.id',
@@ -274,13 +274,12 @@ class SalidaRecetaController extends Controller
                 'enta.fecha_vencimiento',
                 'rd.cantidad AS cantidadRetirar',
                 'enta.lote',
-                'enta.cantidad AS cantidad_entrada'
+                'enta.cantidad_fija'             // ✅ en lugar de cantidad
             )
             ->where('rd.id_recetas', $idreceta)
             ->orderBy('fama.nombre')
             ->get();
 
-        // Stock real: entradas - salidas previas de cada lote, en un solo query
         $ids = $arrayNombreMedicamento->pluck('id_entrada_detalle');
 
         $salidas = DB::table('salida_receta_detalle')
@@ -296,7 +295,7 @@ class SalidaRecetaController extends Controller
             $info->nombreFormat     = $info->nombre;
             $info->fechaVencimiento = \Carbon\Carbon::parse($info->fecha_vencimiento)->format('d-m-Y');
             $totalSalida            = $salidas[$info->id_entrada_detalle] ?? 0;
-            $info->cantidadActual   = $info->cantidad_entrada - $totalSalida;
+            $info->cantidadActual   = $info->cantidad_fija - $totalSalida; // ✅
         }
 
         return view('backend.admin.farmacia.salidareceta.procesar.vistaprocesarreceta', compact(
@@ -338,11 +337,11 @@ class SalidaRecetaController extends Controller
                     ->lockForUpdate()
                     ->first();
 
-                // Stock real = entrada original - todo lo ya despachado de este lote
                 $totalSalidas = SalidaRecetaDetalle::where('id_entrada_detalle', $infoEntradaDeta->id)
                     ->sum('cantidad');
 
-                $stockReal = $infoEntradaDeta->cantidad - $totalSalidas;
+                // ✅ cantidad_fija en lugar de cantidad
+                $stockReal = $infoEntradaDeta->cantidad_fija - $totalSalidas;
 
                 if ($stockReal < $filaArray->cantidad) {
                     DB::rollback();
@@ -360,11 +359,10 @@ class SalidaRecetaController extends Controller
                     ];
                 }
 
-                // Registrar salida — NO mutar entrada_medicamento_detalle
-                $newDetalle                  = new SalidaRecetaDetalle();
-                $newDetalle->id_salidareceta = $salida->id;
+                $newDetalle                     = new SalidaRecetaDetalle();
+                $newDetalle->id_salidareceta    = $salida->id;
                 $newDetalle->id_entrada_detalle = $filaArray->id_entrada_detalle;
-                $newDetalle->cantidad        = $filaArray->cantidad;
+                $newDetalle->cantidad           = $filaArray->cantidad;
                 $newDetalle->save();
             }
 

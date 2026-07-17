@@ -22,9 +22,6 @@ class CreateEntradaMedicamentoDetalleTable extends Migration
             // NOMBRE DE SEGURIDAD DEL MEDICAMENTO
             $table->string('nombre_copia', 300);
 
-            // ESTO SE IRA RESTANDO DE UNA SALIDA
-            $table->integer('cantidad');
-
             // ESTO SERA FIJO PARA REPORTES
             $table->integer('cantidad_fija');
 

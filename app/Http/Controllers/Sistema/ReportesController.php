@@ -194,19 +194,19 @@ class ReportesController extends Controller
 <table width='100%' style='margin-top:{$marginTop}; line-height:1; font-family:Arial,sans-serif;'>
     <tr style='line-height:1;'>
         <td style='text-align:left; width:33%;'>
-            <p style='font-size:14px; margin:0;'>
+            <p style='font-size:13px; margin:0;'>
                 <strong><ul style='margin:0; padding-left:18px;'>
                     <li>{$dato->nombre}</li>
                 </ul></strong>
             </p>
         </td>
         <td style='text-align:center; width:34%;'>
-            <p style='font-size:14px; margin:0;'>
+            <p style='font-size:13px; margin:0;'>
                 <strong>Cantidad: </strong>{$dato->cantidad}
             </p>
         </td>
         <td style='text-align:right; width:33%;'>
-            <p style='font-size:14px; margin:0;'>
+            <p style='font-size:13px; margin:0;'>
                 <strong>Vía: </strong>{$dato->nombreVia}
             </p>
         </td>

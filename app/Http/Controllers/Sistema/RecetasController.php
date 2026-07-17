@@ -11,6 +11,7 @@ use App\Models\ConsultaPaciente;
 use App\Models\ContenidoFarmaceutica;
 use App\Models\CuadroClinico;
 use App\Models\Diagnostico;
+use App\Models\EntradaMedicamentoDetalle;
 use App\Models\EstadoCivil;
 use App\Models\FarmaciaArticulo;
 use App\Models\FuenteFinanciamiento;
@@ -25,6 +26,7 @@ use App\Models\Proveedores;
 use App\Models\Receta;
 use App\Models\RecetaDetalle;
 use App\Models\SalasEspera;
+use App\Models\SalidaRecetaDetalle;
 use App\Models\SubLinea;
 use App\Models\TipeoSanguineo;
 use App\Models\TipoAntecedente;
@@ -68,7 +70,6 @@ class RecetasController extends Controller
         $validar = Validator::make($request->all(), $regla);
         if ($validar->fails()) { return ['success' => 0]; }
 
-        // Traer entradas con su medicamento en un solo query
         $arrayMedicamentos = DB::table('entrada_medicamento AS em')
             ->join('entrada_medicamento_detalle AS deta', 'em.id', '=', 'deta.id_entrada_medicamento')
             ->join('farmacia_articulo AS fa', 'fa.id', '=', 'deta.id_medicamento')
@@ -76,7 +77,7 @@ class RecetasController extends Controller
             ->select(
                 'deta.id',
                 'deta.id_medicamento',
-                'deta.cantidad AS cantidad_entrada',
+                'deta.cantidad_fija',
                 'deta.lote',
                 'deta.fecha_vencimiento',
                 'em.id_fuentefina',
@@ -86,7 +87,6 @@ class RecetasController extends Controller
             ->where('em.id_fuentefina', $request->idfuente)
             ->get();
 
-        // Calcular salidas de todos estos lotes en UN solo query
         $ids = $arrayMedicamentos->pluck('id');
 
         $salidas = DB::table('salida_receta_detalle')
@@ -98,17 +98,15 @@ class RecetasController extends Controller
         $resultado = [];
 
         foreach ($arrayMedicamentos as $detalle) {
-            // Stock real = lo que entró - lo que ya se despachó de este lote
-            $totalSalida  = $salidas[$detalle->id] ?? 0;
-            $stockReal    = $detalle->cantidad_entrada - $totalSalida;
+            $totalSalida = $salidas[$detalle->id] ?? 0;
+            $stockReal   = $detalle->cantidad_fija - $totalSalida;
 
-            // Solo mostrar lotes con stock disponible
             if ($stockReal <= 0) continue;
 
             $fechaVencimiento = \Carbon\Carbon::parse($detalle->fecha_vencimiento)->format('d-m-Y');
 
-            $detalle->cantidadTotal = $stockReal;
-            $detalle->nombretotal   = $detalle->nombre
+            $detalle->cantidadTotal  = $stockReal;
+            $detalle->nombretotal    = $detalle->nombre
                 . ' (Existencia: ' . $stockReal . ')'
                 . ' (Lote: ' . $detalle->lote . ')'
                 . ' (Vencimiento: ' . $fechaVencimiento . ')';
@@ -124,127 +122,128 @@ class RecetasController extends Controller
         ];
     }
 
-
-    public function registroNuevaRecetaParaPaciente(Request $request){
-
-        $regla = array(
-            'idconsulta' => 'required',
-            'fecha' => 'required',
+    // NO VERIFICAR STOCK YA QUE SOLO ES UN REGISTRO
+    public function registroNuevaRecetaParaPaciente(Request $request)
+    {
+        $validar = Validator::make($request->all(), [
+            'idconsulta'  => 'required',
+            'fecha'       => 'required',
             'diagnostico' => 'required',
-        );
+        ]);
 
-        // indicacionGeneral
-        // proximaCita
+        if ($validar->fails()) { return ['success' => 0]; }
 
-        $validar = Validator::make($request->all(), $regla);
-
-        if ($validar->fails()){ return ['success' => 0];}
-
-        if(Receta::where('id_consulta', $request->idconsulta)->first()){
+        if (Receta::where('id_consulta', $request->idconsulta)->exists()) {
             return ['success' => 1];
         }
-        else{
 
-            DB::beginTransaction();
+        DB::beginTransaction();
 
-            try {
-                $usuario = auth()->user();
+        try {
+            $usuario         = auth()->user();
+            $infoConsulta    = ConsultaPaciente::findOrFail($request->idconsulta);
+            $datosContenedor = json_decode($request->contenedorArray, true);
 
+            $receta                      = new Receta();
+            $receta->id_consulta         = $request->idconsulta;
+            $receta->id_paciente         = $infoConsulta->id_paciente;
+            $receta->id_diagnostico      = $request->diagnostico;
+            $receta->descripcion_general = $request->indicacionGeneral;
+            $receta->fecha               = $request->fecha;
+            $receta->proxima_cita        = $request->proximaCita ?: null;
+            $receta->estado              = 1;
+            $receta->id_usuario          = $usuario->id;
+            $receta->id_usuario_estado   = null;
+            $receta->save();
 
-                $infoConsulta = ConsultaPaciente::where('id', $request->idconsulta)->first();
-                $datosContenedor = json_decode($request->contenedorArray, true);
-
-                $receta = new Receta();
-                $receta->id_consulta = $request->idconsulta;
-                $receta->id_paciente = $infoConsulta->id_paciente;
-                $receta->id_diagnostico = $request->diagnostico;
-                $receta->descripcion_general = $request->indicacionGeneral;
-                $receta->fecha = $request->fecha;
-                $receta->proxima_cita = $request->proximaCita;
-                $receta->estado = 1;
-                $receta->id_usuario = $usuario->id;
-                $receta->id_usuario_estado = null; // saber que usuario denego receta
-                $receta->save();
-
-                // REGISTRAR CADA FILA MEDICAMENTO
-                // SE DEBE REGISTRAR EL ID ENTRADA DETALLE Y LA CANTIDAD A RETIRARLE
-
-                foreach ($datosContenedor as $filaArray) {
-
-                    $detalle = new RecetaDetalle();
-                    $detalle->id_recetas = $receta->id;
-                    $detalle->id_entrada_detalle = $filaArray['infoIdMedicamento']; // VIENE ID ENTRADA MEDICAMENTO DETALLE
-                    $detalle->cantidad = $filaArray['infoCantidad'];
-                    $detalle->descripcion = $filaArray['infoIndicacion'];
-                    $detalle->id_via = $filaArray['infoIdVia'];
-                    $detalle->save();
-                }
-
-                DB::commit();
-                return ['success' => 2];
-
-            }catch(\Throwable $e){
-                Log::info('error: ' . $e);
-                DB::rollback();
-                return ['success' => 99];
+            foreach ($datosContenedor as $filaArray) {
+                $detalle                     = new RecetaDetalle();
+                $detalle->id_recetas         = $receta->id;
+                $detalle->id_entrada_detalle = $filaArray['infoIdMedicamento'];
+                $detalle->cantidad           = $filaArray['infoCantidad'];
+                $detalle->descripcion        = $filaArray['infoIndicacion'];
+                $detalle->id_via             = $filaArray['infoIdVia'];
+                $detalle->save();
             }
+
+            DB::commit();
+            return ['success' => 2];
+
+        } catch (\Throwable $e) {
+            Log::error('registroNuevaRecetaParaPaciente: ' . $e);
+            DB::rollback();
+            return ['success' => 99];
         }
     }
 
 
 
-    public function indexVistaEditarVerReceta($idreceta){
+    public function indexVistaEditarVerReceta($idreceta)
+    {
+        $infoReceta   = Receta::findOrFail($idreceta);
+        $infoConsulta = ConsultaPaciente::findOrFail($infoReceta->id_consulta);
+        $infoPaciente = Paciente::findOrFail($infoConsulta->id_paciente);
 
-        $infoReceta = Receta::where('id', $idreceta)->first();
+        $nombreCompleto = $infoPaciente->nombres . ' ' . $infoPaciente->apellidos;
 
-        $infoConsulta = ConsultaPaciente::where('id', $infoReceta->id_consulta)->first();
-        $infoPaciente = Paciente::where('id', $infoConsulta->id_paciente)->first();
+        $arrayFuente      = FuenteFinanciamiento::where('id', 3)->get();
+        $arrayDiagnostico = Diagnostico::orderBy('nombre')->get();
+        $arrayVia         = ViaReceta::orderBy('nombre')->get();
+        $fechaActual      = Carbon::now()->toDateString();
 
-        $nombreCompleto = $infoPaciente->nombres . " " . $infoPaciente->apellidos;
+        // Salidas ya despachadas por lote — para calcular stock real
+        $idsEntrada = DB::table('recetas_detalle')
+            ->where('id_recetas', $idreceta)
+            ->pluck('id_entrada_detalle');
 
-        $arrayFuente = FuenteFinanciamiento::where('id',3)->get();
-
-        $arrayDiagnostico = Diagnostico::orderBy('nombre', 'ASC')->get();
-
-        $arrayVia = ViaReceta::orderBy('nombre', 'ASC')->get();
-
-        $fechaActual = Carbon::now()->toDateString();
+        $salidas = DB::table('salida_receta_detalle')
+            ->whereIn('id_entrada_detalle', $idsEntrada)
+            ->select('id_entrada_detalle', DB::raw('SUM(cantidad) as total_salida'))
+            ->groupBy('id_entrada_detalle')
+            ->pluck('total_salida', 'id_entrada_detalle');
 
         $arrayDetalle = DB::table('recetas_detalle AS red')
             ->join('entrada_medicamento_detalle AS entrade', 'entrade.id', '=', 'red.id_entrada_detalle')
-            ->join('farmacia_articulo AS fama', 'fama.id', '=', 'entrade.id_medicamento')
-            ->select('fama.nombre', 'red.id_recetas', 'entrade.cantidad AS cantidadActual',
-                'red.id_via', 'red.cantidad', 'red.descripcion', 'fama.id AS idfarmacia', 'entrade.id AS idEntradaDeta', 'entrade.lote')
+            ->join('farmacia_articulo AS fama', 'fama.id', '=', 'entrade.id_medicamento') // ✅ nombre real
+            ->join('via_receta AS via', 'via.id', '=', 'red.id_via')                      // ✅ join en lugar de N+1
+            ->leftJoin('articulo_medicamento AS am', 'am.id_farmacia_articulo', '=', 'entrade.id_medicamento')
+            ->select(
+                'fama.nombre',
+                'red.id_recetas',
+                'red.id_via',
+                'red.cantidad',
+                'red.descripcion',
+                'fama.id AS idfarmacia',
+                'entrade.id AS idEntradaDeta',
+                'entrade.lote',
+                'entrade.cantidad_fija',   // ✅ columna correcta
+                'via.nombre AS nombreVia', // ✅ viene del join
+                'am.nombre_generico'
+            )
             ->where('red.id_recetas', $idreceta)
-            ->orderBy('fama.nombre', 'ASC')
+            ->orderBy('fama.nombre')
             ->get();
 
         $contador = 0;
-
-        foreach ($arrayDetalle as $info){
+        foreach ($arrayDetalle as $info) {
             $contador++;
-
             $info->contador = $contador;
 
-            $nombreGenerico = "";
-            if($infoGenerico = ArticuloMedicamento::where('id_farmacia_articulo', $info->idfarmacia)->first()){
-                $nombreGenerico = $infoGenerico->nombre_generico;
-            }
-            $info->nombreGenerico = $nombreGenerico;
+            // Stock real = cantidad_fija - lo ya despachado de este lote
+            $totalSalida          = $salidas[$info->idEntradaDeta] ?? 0;
+            $info->cantidadActual = $info->cantidad_fija - $totalSalida;
 
-            $infoVia = ViaReceta::where('id', $info->id_via)->first();
-            $info->nombreVia = $infoVia->nombre;
+            $info->nombreGenerico = $info->nombre_generico ?? '';
         }
 
-        if($infoReceta->estado != 1){
-            $titulo = "VER FICHA DE RECETA";
-        }else{
-            $titulo = "MODIFICACIÓN FICHA DE RECETA";
-        }
+        $titulo = $infoReceta->estado != 1
+            ? 'VER FICHA DE RECETA'
+            : 'MODIFICACIÓN FICHA DE RECETA';
 
-        return view('backend.admin.historialclinico.recetas.vistaeditarreceta', compact('idreceta',
-            'nombreCompleto', 'infoReceta', 'arrayDiagnostico', 'arrayFuente', 'arrayVia',
-            'fechaActual', 'arrayDetalle', 'titulo', 'infoConsulta'));
+        return view('backend.admin.historialclinico.recetas.vistaeditarreceta', compact(
+            'idreceta', 'nombreCompleto', 'infoReceta', 'arrayDiagnostico',
+            'arrayFuente', 'arrayVia', 'fechaActual', 'arrayDetalle', 'titulo', 'infoConsulta'
+        ));
     }
 
     public function actualizarRecetaMedica(Request $request){

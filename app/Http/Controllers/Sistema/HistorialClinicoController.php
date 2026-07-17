@@ -350,14 +350,17 @@ class HistorialClinicoController extends Controller
             'nombreCompleto', 'idconsulta', 'infoAntrop'));
     }
 
-    function bloqueHistorialRecetas($idconsulta)
+    public function bloqueHistorialRecetas($idconsulta)
     {
-        $infoConsulta = ConsultaPaciente::select('id_paciente')
+        $infoConsulta = ConsultaPaciente::select('id', 'id_paciente')
             ->findOrFail($idconsulta);
 
-        $arrayRecetas = Receta::with('usuario:id,nombre')
+        $arrayRecetas = Receta::with([
+            'usuario:id,nombre',
+            'diagnostico:id,nombre',
+        ])
             ->where('id_paciente', $infoConsulta->id_paciente)
-            ->orderBy('fecha')
+            ->orderBy('fecha', 'DESC')
             ->get();
 
         foreach ($arrayRecetas as $dato) {
@@ -365,10 +368,12 @@ class HistorialClinicoController extends Controller
             $dato->fechaProFormat = $dato->proxima_cita
                 ? \Carbon\Carbon::parse($dato->proxima_cita)->format('d-m-Y')
                 : '—';
-            $dato->nombreusuario = $dato->usuario->nombre ?? '';
+            $dato->nombreusuario = $dato->usuario->nombre  ?? '—';
+            $dato->nombreDiagnostico = $dato->diagnostico->nombre ?? '—';
         }
 
-        $existeReceta = $arrayRecetas->where('id_consulta', $idconsulta)->isNotEmpty() ? 1 : 0;
+        // ✅ query directa, sin depender de la colección
+        $existeReceta = Receta::where('id_consulta', (int) $idconsulta)->exists() ? 1 : 0;
 
         return view('backend.admin.historialclinico.bloques.bloquerecetas',
             compact('arrayRecetas', 'existeReceta'));

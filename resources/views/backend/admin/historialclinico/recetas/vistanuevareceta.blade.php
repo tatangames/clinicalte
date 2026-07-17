@@ -859,6 +859,8 @@
             fd.append('indicacionGeneral',  indicacionGeneral);
             fd.append('proximaCita',        proximaCita);
 
+            // NO VERIFICA STOCK SOLO ES UN REGISTRO, EN FARMACIA AHI SI VERIFICA STOCK
+
             axios.post(urlAdmin + '/admin/recetas/registro/parapaciente', fd)
                 .then(res => {
                     closeLoading();
@@ -887,7 +889,8 @@
                                 salirVistaHistorialClinico();
                             }
                         });
-                    } else {
+                    }
+                    else {
                         toastr.error('Error al guardar la receta');
                     }
                 })

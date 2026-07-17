@@ -38,7 +38,6 @@
 @section('content')
 
     @php
-        // Mapa de estados: número → etiqueta legible
         $estadoLabels = [
             1 => 'Pendiente',
             2 => 'Procesada',
@@ -65,7 +64,6 @@
 
         .rx-wrap { width: 100%; padding: 0 0.5rem 3rem; }
 
-        /* ── Cabecera paciente ── */
         .rx-patient-bar {
             display: flex; align-items: center; gap: 14px;
             background: var(--rx-white);
@@ -85,7 +83,6 @@
         .rx-patient-label { font-size: 11px; color: var(--rx-gray); text-transform: uppercase; letter-spacing: .05em; margin: 0; }
         .rx-patient-name  { font-size: 15px; font-weight: 700; color: #212529; margin: 0; }
 
-        /* ── Estado badge ── */
         .rx-estado-badge {
             display: inline-flex; align-items: center; gap: 5px;
             padding: 4px 12px; border-radius: 20px;
@@ -96,7 +93,6 @@
         .rx-estado-procesada { background: var(--rx-blue-lt); color: var(--rx-blue); }
         .rx-estado-denegada  { background: #fde8e6; color: var(--rx-red); }
 
-        /* ── Secciones ── */
         .rx-section {
             background: var(--rx-white);
             border: 1px solid var(--rx-border);
@@ -120,7 +116,6 @@
         .rx-section-title { font-size: 13px; font-weight: 700; color: #343a40; margin: 0; }
         .rx-section-body  { padding: 1.1rem 1.2rem; }
 
-        /* ── Labels ── */
         .rx-label {
             font-size: 11.5px; font-weight: 600;
             color: var(--rx-gray);
@@ -128,7 +123,6 @@
             margin-bottom: 4px; display: block;
         }
 
-        /* ── Inputs ── */
         .rx-section .form-control {
             border-radius: 7px; border-color: var(--rx-border); font-size: 13px;
         }
@@ -137,7 +131,6 @@
             box-shadow: 0 0 0 3px rgba(26,111,196,.12);
         }
 
-        /* ── Tabla ── */
         .rx-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .rx-table thead tr { background: var(--rx-surface); }
         .rx-table thead th {
@@ -158,7 +151,6 @@
         .rx-table tbody tr:last-child td { border-bottom: none; }
         .rx-table .form-control { font-size: 13px; border-radius: 6px; }
 
-        /* Fila cargada del servidor — borde izquierdo suave para distinguirlas */
         .rx-table tbody tr.fila-existente { border-left: 3px solid var(--rx-blue-lt); }
         .rx-table tbody tr.fila-nueva     { border-left: 3px solid var(--rx-green-lt); }
 
@@ -169,7 +161,6 @@
             font-size: 12px; font-weight: 700;
         }
 
-        /* ── Botones ── */
         .rx-btn {
             display: inline-flex; align-items: center; gap: 6px;
             padding: .45rem 1rem; border-radius: 8px; border: none;
@@ -190,13 +181,11 @@
         .rx-btn-amber { background: var(--rx-amber); color: #fff; }
         .rx-btn-amber:hover { filter: brightness(1.1); color: #fff; }
 
-        /* ── Topbar ── */
         .rx-topbar {
             display: flex; align-items: center; justify-content: space-between;
             flex-wrap: wrap; gap: 8px; margin-bottom: 1.25rem;
         }
 
-        /* ── Divider ── */
         .rx-divider {
             display: flex; align-items: center; gap: 10px;
             margin: 1.5rem 0 1rem;
@@ -207,7 +196,6 @@
             content: ''; flex: 1; height: 1px; background: var(--rx-border);
         }
 
-        /* ── Badge ── */
         .rx-badge {
             display: inline-block; padding: 2px 10px;
             border-radius: 20px; font-size: 11px; font-weight: 700;
@@ -216,13 +204,11 @@
         .rx-badge-green { background: var(--rx-green-lt); color: var(--rx-green); }
         .rx-badge-amber { background: var(--rx-amber-lt); color: var(--rx-amber); }
 
-        /* ── Empty placeholder ── */
         .rx-empty {
             text-align: center; padding: 2.5rem 1rem; color: #adb5bd;
         }
         .rx-empty i { font-size: 2rem; display: block; margin-bottom: .5rem; }
 
-        /* ── Aviso solo lectura ── */
         .rx-readonly-notice {
             display: flex; align-items: center; gap: 10px;
             background: var(--rx-amber-lt);
@@ -233,7 +219,6 @@
             margin-bottom: 1.25rem;
         }
 
-        /* ── Footer sticky ── */
         .rx-footer-save {
             position: sticky; bottom: 0;
             background: var(--rx-white);
@@ -245,14 +230,12 @@
             z-index: 10;
         }
 
-        /* ── Select2 ── */
         .select2-container--bootstrap-5 .select2-selection {
             border-radius: 7px !important;
             border-color: var(--rx-border) !important;
             font-size: 13px !important;
         }
 
-        /* ── Cantidad bodega — chip visual ── */
         .rx-stock-chip {
             display: inline-flex; align-items: center; gap: 4px;
             background: var(--rx-green-lt); color: var(--rx-green);
@@ -269,15 +252,14 @@
                 <i class="fas fa-arrow-left"></i> Atrás
             </button>
             <span style="font-size:14px; font-weight:600; color:#343a40;">
-            <i class="fas fa-file-medical-alt mr-1 text-primary"></i>{{ $titulo }}
-        </span>
+                <i class="fas fa-file-medical-alt mr-1 text-primary"></i>{{ $titulo }}
+            </span>
         </div>
 
         {{-- ── Aviso si receta no es editable ── --}}
         @if($infoReceta->estado != 1)
             <div class="rx-readonly-notice">
                 <i class="fas fa-lock"></i>
-                {{-- FIX: mostrar etiqueta legible en lugar del número --}}
                 <span>Esta receta está en estado <strong>{{ $estadoLabel }}</strong> y no puede modificarse.</span>
             </div>
         @endif
@@ -290,8 +272,6 @@
                 <p class="rx-patient-name">{{ $nombreCompleto }}</p>
             </div>
             <div class="ml-auto d-flex align-items-center gap-2" style="gap:8px">
-
-                {{-- FIX: badge de estado con etiqueta e ícono según valor --}}
                 @if($infoReceta->estado == 1)
                     <span class="rx-estado-badge rx-estado-activo">
                         <i class="fas fa-circle" style="font-size:7px"></i> Pendiente
@@ -309,14 +289,11 @@
                         <i class="fas fa-circle" style="font-size:7px"></i> {{ $estadoLabel }}
                     </span>
                 @endif
-
                 <span class="rx-badge rx-badge-amber"><i class="fas fa-edit mr-1"></i>Editar receta</span>
             </div>
         </div>
 
-        {{-- ══════════════════════════════════════════
-             SECCIÓN 1 — Datos generales
-        ══════════════════════════════════════════ --}}
+        {{-- ══ SECCIÓN 1 — Datos generales ══ --}}
         <div class="rx-section">
             <div class="rx-section-head">
                 <div class="rx-section-icon"><i class="fas fa-calendar-alt"></i></div>
@@ -359,9 +336,7 @@
             </div>
         </div>
 
-        {{-- ══════════════════════════════════════════
-             SECCIÓN 2 — Agregar medicamento (solo si editable)
-        ══════════════════════════════════════════ --}}
+        {{-- ══ SECCIÓN 2 — Agregar medicamento (solo si editable) ══ --}}
         @if($infoReceta->estado == 1)
 
             <div class="rx-divider"><i class="fas fa-pills"></i> Agregar medicamento</div>
@@ -409,7 +384,7 @@
                                 <option value="">Seleccionar…</option>
                                 @foreach($arrayVia as $item)
                                     <option value="{{ $item->id }}"
-                                        {{ $infoReceta->id_via == $item->id ? 'selected' : '' }}>
+                                        {{ isset($infoReceta->id_via) && $infoReceta->id_via == $item->id ? 'selected' : '' }}>
                                         {{ $item->nombre }}
                                     </option>
                                 @endforeach
@@ -435,9 +410,7 @@
 
         @endif
 
-        {{-- ══════════════════════════════════════════
-             SECCIÓN 3 — Detalle de medicamentos
-        ══════════════════════════════════════════ --}}
+        {{-- ══ SECCIÓN 3 — Detalle de medicamentos ══ --}}
         <div class="rx-divider"><i class="fas fa-list-ul"></i> Detalle de receta</div>
 
         <div class="rx-section">
@@ -445,8 +418,8 @@
                 <div class="rx-section-icon"><i class="fas fa-list-ul"></i></div>
                 <span class="rx-section-title">Medicamentos en la receta</span>
                 <span class="rx-badge rx-badge-blue ml-auto" id="contador-filas">
-                {{ count($arrayDetalle) }} {{ count($arrayDetalle) == 1 ? 'medicamento' : 'medicamentos' }}
-            </span>
+                    {{ count($arrayDetalle) }} {{ count($arrayDetalle) == 1 ? 'medicamento' : 'medicamentos' }}
+                </span>
             </div>
 
             <div style="overflow-x: auto;">
@@ -553,11 +526,15 @@
 
     <script>
         $(document).ready(function () {
+            // ✅ Verificar existencia antes de inicializar Select2
+            // select-fuente y select-medicamento solo existen cuando estado == 1
             ['#select-dianostico', '#select-via', '#select-medicamento'].forEach(function(sel){
-                $(sel).select2({
-                    theme: "bootstrap-5",
-                    language: { noResults: () => "Sin resultados" }
-                });
+                if ($(sel).length) {
+                    $(sel).select2({
+                        theme: "bootstrap-5",
+                        language: { noResults: () => "Sin resultados" }
+                    });
+                }
             });
 
             cargarTablaProducto();
@@ -576,7 +553,12 @@
 
         /* ── Cargar medicamentos por fuente ── */
         function cargarTablaProducto() {
-            var idFuente = document.getElementById('select-fuente').value;
+            var selectFuente = document.getElementById('select-fuente');
+
+            // ✅ El select solo existe si la receta es editable (estado == 1)
+            if (!selectFuente) return;
+
+            var idFuente = selectFuente.value;
             document.getElementById("nombre-generico").value = "";
 
             if (!idFuente) {
@@ -653,47 +635,46 @@
                 return;
             }
 
-            // Quitar placeholder vacío si existe
             var filaVacia = document.getElementById('fila-vacia');
             if (filaVacia) filaVacia.remove();
 
             var nFilas = $('#matriz > tbody > tr').length + 1;
 
             var fila = `
-        <tr class="fila-nueva">
-            <td><span class="rx-row-num" id="fila${nFilas}">${nFilas}</span></td>
-            <td>
-                <input name="arrayNombre[]" disabled data-idmedicamento="${idmedicamento}"
-                       value="${nombre}" class="form-control form-control-sm" type="text">
-            </td>
-            <td>
-                <input disabled value="${lote}" class="form-control form-control-sm" type="text">
-            </td>
-            <td>
-                <input name="arrayCantidad[]" disabled value="${cantidad}"
-                       class="form-control form-control-sm" type="number">
-            </td>
-            <td>
-                <span class="rx-stock-chip">
-                    <i class="fas fa-boxes" style="font-size:10px"></i>
-                    ${hayTotal}
-                </span>
-            </td>
-            <td>
-                <input name="arrayVia[]" disabled data-idvia="${idvia}"
-                       value="${nombreVia}" class="form-control form-control-sm" type="text">
-            </td>
-            <td>
-                <textarea name="arrayIndicacion[]" class="form-control form-control-sm" rows="2">${indicaciones}</textarea>
-            </td>
-            <td>
-                <button type="button" class="rx-btn rx-btn-danger"
-                        style="padding:.3rem .7rem;font-size:12px;"
-                        onclick="borrarFila(this)">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
-            </td>
-        </tr>`;
+            <tr class="fila-nueva">
+                <td><span class="rx-row-num" id="fila${nFilas}">${nFilas}</span></td>
+                <td>
+                    <input name="arrayNombre[]" disabled data-idmedicamento="${idmedicamento}"
+                           value="${nombre}" class="form-control form-control-sm" type="text">
+                </td>
+                <td>
+                    <input disabled value="${lote}" class="form-control form-control-sm" type="text">
+                </td>
+                <td>
+                    <input name="arrayCantidad[]" disabled value="${cantidad}"
+                           class="form-control form-control-sm" type="number">
+                </td>
+                <td>
+                    <span class="rx-stock-chip">
+                        <i class="fas fa-boxes" style="font-size:10px"></i>
+                        ${hayTotal}
+                    </span>
+                </td>
+                <td>
+                    <input name="arrayVia[]" disabled data-idvia="${idvia}"
+                           value="${nombreVia}" class="form-control form-control-sm" type="text">
+                </td>
+                <td>
+                    <textarea name="arrayIndicacion[]" class="form-control form-control-sm" rows="2">${indicaciones}</textarea>
+                </td>
+                <td>
+                    <button type="button" class="rx-btn rx-btn-danger"
+                            style="padding:.3rem .7rem;font-size:12px;"
+                            onclick="borrarFila(this)">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>`;
 
             $("#matriz tbody").append(fila);
             actualizarContador();
@@ -731,14 +712,14 @@
             if (conteo === 0) {
                 var cols = {{ $infoReceta->estado == 1 ? 8 : 7 }};
                 $('#matriz tbody').html(`
-            <tr id="fila-vacia">
-                <td colspan="${cols}">
-                    <div class="rx-empty">
-                        <i class="fas fa-prescription-bottle-alt"></i>
-                        No hay medicamentos en esta receta.
-                    </div>
-                </td>
-            </tr>`);
+                <tr id="fila-vacia">
+                    <td colspan="${cols}">
+                        <div class="rx-empty">
+                            <i class="fas fa-prescription-bottle-alt"></i>
+                            No hay medicamentos en esta receta.
+                        </div>
+                    </td>
+                </tr>`);
             }
         }
 
@@ -808,7 +789,7 @@
 
             openLoading();
 
-            var idreceta  = {{ $idreceta }};
+            var idreceta   = {{ $idreceta }};
             var contenedor = [];
             for (var i = 0; i < arrayIdMedicamentos.length; i++) {
                 contenedor.push({
@@ -820,18 +801,15 @@
             }
 
             var fd = new FormData();
-            fd.append('contenedorArray',  JSON.stringify(contenedor));
-            fd.append('idreceta',         idreceta);
-            fd.append('fecha',            fecha);
-            fd.append('diagnostico',      diagnostico);
-            fd.append('indicacionGeneral',indicacionGeneral);
-            fd.append('proximaCita',      proximaCita);
+            fd.append('contenedorArray',   JSON.stringify(contenedor));
+            fd.append('idreceta',          idreceta);
+            fd.append('fecha',             fecha);
+            fd.append('diagnostico',       diagnostico);
+            fd.append('indicacionGeneral', indicacionGeneral);
+            fd.append('proximaCita',       proximaCita);
 
             axios.post(urlAdmin + '/admin/recetas/actualizar/parapaciente', fd)
                 .then(res => {
-
-                    console.log(res);
-
                     closeLoading();
                     var idconsulta = res.data.idconsulta;
 
@@ -844,9 +822,7 @@
                             confirmButtonText: 'Recargar',
                             allowOutsideClick: false
                         }).then(function (result) {
-                            if (result.value) {
-                                salirVistaHistorialClinico(idconsulta);
-                            }
+                            if (result.value) { salirVistaHistorialClinico(idconsulta); }
                         });
 
                     } else if (res.data.success === 2) {
@@ -857,9 +833,7 @@
                             confirmButtonText: 'Aceptar',
                             allowOutsideClick: false
                         }).then(function (result) {
-                            if (result.value) {
-                                salirVistaHistorialClinico(idconsulta);
-                            }
+                            if (result.value) { salirVistaHistorialClinico(idconsulta); }
                         });
 
                     } else {
