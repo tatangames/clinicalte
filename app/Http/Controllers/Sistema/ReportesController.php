@@ -411,17 +411,27 @@ class ReportesController extends Controller
         $dataArray = [];
 
         // *** IDs salida_receta RANGO desde-hasta (para ENTREGADO TOTAL) ***
-        $pilaIdSalidaRecetaRango = DB::table('recetas AS r')
-            ->join('salida_receta AS sr', 'sr.id_recetas', '=', 'r.id')
-            ->where('r.estado', 2)
+        $pilaIdSalidaRecetaRango = DB::table('salida_receta AS sr')
+            ->where(function ($query) use ($start, $end) {
+                $query->whereIn('sr.id_recetas', function ($sub) {
+                    $sub->select('id')->from('recetas')->where('estado', 2);
+                })
+                    ->orWhere('sr.tipo_salida', 'manual');
+            })
             ->whereBetween('sr.fecha', [$start, $end])
             ->pluck('sr.id')
             ->toArray();
 
         // *** IDs salida_receta ACUMULADO hasta "hasta" (para ENTREGADO) ***
-        $pilaIdSalidaRecetaHasta = DB::table('recetas AS r')
-            ->join('salida_receta AS sr', 'sr.id_recetas', '=', 'r.id')
-            ->where('r.estado', 2)
+        $pilaIdSalidaRecetaHasta = DB::table('salida_receta AS sr')
+            ->where(function ($query) use ($end) {
+                // Salidas con receta (estado=2)
+                $query->whereIn('sr.id_recetas', function ($sub) {
+                    $sub->select('id')->from('recetas')->where('estado', 2);
+                })
+                    // O salidas manuales (sin receta)
+                    ->orWhere('sr.tipo_salida', 'manual');
+            })
             ->where('sr.fecha', '<=', $end)
             ->pluck('sr.id')
             ->toArray();
@@ -537,7 +547,7 @@ class ReportesController extends Controller
                 $dataArray[] = [
                     'contador' => $contador,
                     'codigo' => $dato->codigo_articulo,
-                    'nombre' => $dato->nombre,
+                    'nombre' => $dato->nombre . " | " . $dato->id,
                     'financiamiento' => $infoFuenteFi ? $infoFuenteFi->nombre : '',
                     'linea' => $infoLinea ? $infoLinea->nombre : '',
                     'proveedor' => $infoProve ? $infoProve->nombre : '',
@@ -556,6 +566,8 @@ class ReportesController extends Controller
                     'total_existencia' => $totalExistencia_COL,
                     'totalexistencia_dona' => $totalExistenciaDona_COL,
                 ];
+
+
             }
         }
 
@@ -566,6 +578,8 @@ class ReportesController extends Controller
         $sumatoriaTotalDescargado = '$' . number_format((float)$sumatoriaTotalDescargado, 2, '.', ',');
         $sumatoriaTotalExistencia = '$' . number_format((float)$sumatoriaTotalExistencia, 2, '.', ',');
         $sumatoriaTotalDona = '$' . number_format((float)$sumatoriaTotalDona, 4, '.', ',');
+
+
 
         // --- Agrupar por linea ---
         $dataGrouped = collect($dataArray)->groupBy('linea');
@@ -757,26 +771,27 @@ class ReportesController extends Controller
     }
 
 
-
-    public function movimientosMedicamento($id, $desde = null, $hasta = null){
-
+    public function movimientosMedicamento($id, $desde = null, $hasta = null)
+    {
         ini_set('memory_limit', '1024M');
+        ini_set('pcre.backtrack_limit', '10000000');
+        ini_set('pcre.recursion_limit', '10000000');
 
         $medicamento = FarmaciaArticulo::findOrFail($id);
 
         $start = $desde ? Carbon::parse($desde)->startOfDay() : null;
-        $end   = $hasta ? Carbon::parse($hasta)->endOfDay()   : null;
+        $end = $hasta ? Carbon::parse($hasta)->endOfDay() : null;
 
         $desdeFormat = $desde ? date("d-m-Y", strtotime($desde)) : 'Inicio';
         $hastaFormat = $hasta ? date("d-m-Y", strtotime($hasta)) : 'Hoy';
 
-        // *** ENTRADAS: lotes del medicamento ***
+        // *** ENTRADAS ***
         $entradas = DB::table('entrada_medicamento_detalle AS emd')
             ->join('entrada_medicamento AS em', 'em.id', '=', 'emd.id_entrada_medicamento')
             ->join('proveedores AS p', 'p.id', '=', 'em.id_proveedor')
             ->join('fuente_financiamiento AS ff', 'ff.id', '=', 'em.id_fuentefina')
             ->where('emd.id_medicamento', $id)
-            ->when($start && $end, function($q) use ($start, $end){
+            ->when($start && $end, function ($q) use ($start, $end) {
                 $q->whereBetween('em.fecha', [$start, $end]);
             })
             ->select(
@@ -793,19 +808,25 @@ class ReportesController extends Controller
             ->orderBy('em.fecha', 'ASC')
             ->get();
 
-        // *** SALIDAS POR RECETA ***
-        $salidasReceta = DB::table('salida_receta_detalle AS srd')
+        // *** SALIDAS: receta (estado=2) + manuales ***
+        $salidas = DB::table('salida_receta_detalle AS srd')
             ->join('salida_receta AS sr', 'sr.id', '=', 'srd.id_salidareceta')
-            ->join('recetas AS r', 'r.id', '=', 'sr.id_recetas')
             ->join('entrada_medicamento_detalle AS emd', 'emd.id', '=', 'srd.id_entrada_detalle')
             ->join('usuario AS u', 'u.id', '=', 'sr.id_usuario')
+            ->leftJoin('recetas AS r', 'r.id', '=', 'sr.id_recetas')
             ->where('emd.id_medicamento', $id)
-            ->where('r.estado', 2)
-            ->when($start && $end, function($q) use ($start, $end){
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                    $q->where('sr.tipo_salida', 'receta')
+                        ->where('r.estado', 2);
+                })->orWhere('sr.tipo_salida', 'manual');
+            })
+            ->when($start && $end, function ($q) use ($start, $end) {
                 $q->whereBetween('sr.fecha', [$start, $end]);
             })
             ->select(
                 'sr.fecha',
+                'sr.tipo_salida',
                 'r.id AS id_receta',
                 'u.nombre AS usuario',
                 'emd.lote',
@@ -818,176 +839,224 @@ class ReportesController extends Controller
             ->get();
 
         // *** TOTALES ***
-        $totalEntradas      = $entradas->sum('cantidad_entrada');
-        $totalSalidasReceta = $salidasReceta->sum('cantidad_salida');
-        $totalSalidas       = $totalSalidasReceta;
+        $totalEntradas = $entradas->sum('cantidad_entrada');
+        $totalSalidas = $salidas->sum('cantidad_salida');
+        $totalSalidasReceta = $salidas->where('tipo_salida', 'receta')->sum('cantidad_salida');
+        $totalSalidasManual = $salidas->where('tipo_salida', 'manual')->sum('cantidad_salida');
+        $existenciaFinal = $totalEntradas - $totalSalidas;
 
         // *** mPDF ***
         $mpdf = new \Mpdf\Mpdf([
-            'tempDir'      => sys_get_temp_dir(),
-            'format'       => 'LETTER',
-            'orientation'  => 'L',
-            'margin_top'   => 35,
-            'margin_left'  => 8,
+            'tempDir' => sys_get_temp_dir(),
+            'format' => 'LETTER',
+            'orientation' => 'P',
+            'margin_top' => 8,
+            'margin_left' => 8,
             'margin_right' => 8,
-            'margin_bottom'=> 12,
+            'margin_bottom' => 10,
         ]);
 
         $mpdf->SetTitle('Movimientos ' . $medicamento->nombre);
         $mpdf->showImageErrors = false;
 
-        $logoalcaldiaData = base64_encode(file_get_contents(public_path('images/gobiernologo.jpg')));
-        $logosantaanaData = base64_encode(file_get_contents(public_path('images/logo.png')));
-        $logoalcaldia     = 'data:image/jpeg;base64,' . $logoalcaldiaData;
-        $logosantaana     = 'data:image/png;base64,'  . $logosantaanaData;
+        $logoGobiernoData = base64_encode(file_get_contents(public_path('images/gobiernologo.jpg')));
+        $logoGobierno = 'data:image/jpeg;base64,' . $logoGobiernoData;
 
-        $mpdf->SetHTMLFooter("
-    <table style='width:100%; font-size:9px;'>
-        <tr>
-            <td style='text-align:right;'>Página {PAGENO} de {nb}</td>
-        </tr>
-    </table>
-");
+        $logoAlcaldiaData = base64_encode(file_get_contents(public_path('images/logojpg.jpg')));
+        $logoAlcaldia = 'data:image/jpg;base64,' . $logoAlcaldiaData;
 
-        $stylesheet = file_get_contents('css/cssreportefinal.css');
+        $stylesheet = "
+        body { font-family: Arial, sans-serif; font-size: 9px; }
+        table { border-collapse: collapse; width: 100%; }
+        td, th { text-decoration: none; border: none; }
+        a { text-decoration: none; color: inherit; }
+    ";
         $mpdf->WriteHTML($stylesheet, 1);
 
-        // *** HEADER ***
+        $mpdf->SetHTMLFooter("
+        <table style='width:100%; font-size:9px;'>
+            <tr><td style='text-align:right;'>Página {PAGENO} de {nb}</td></tr>
+        </table>
+    ");
+
+        // *** ENCABEZADO ***
         $header = "
 <table style='width:100%; border-collapse:collapse; margin-bottom:0px'>
     <tr>
         <td style='width:15%; text-align:left;'>
-            <img src='$logosantaana' style='max-width:100px; height:auto;'>
+            <img src='$logoAlcaldia' alt='Santa Ana Norte' style='max-width:100px; height:auto;'>
         </td>
         <td style='width:70%; text-align:center;'>
             <h1 style='font-size:15px; margin:0; color:#003366;'>ALCALDÍA MUNICIPAL DE SANTA ANA NORTE</h1>
-            <h3 style='font-size:14px; margin:0; color:#003366;'>Clínica Municipal Cristóbal Peraza</h3>
-            <h3 style='font-size:13px; margin:0; color:#003366;'>REPORTE DE MOVIMIENTOS DE MEDICAMENTO</h3>
-            <h3 style='font-size:12px; margin:2px 0 0 0; color:#003366;'>
+            <h3 style='font-size:13px; margin:0; color:#003366;'>Clínica Municipal Cristóbal Peraza</h3>
+            <h3 style='font-size:12px; margin:0; color:#003366;'>REPORTE DE MOVIMIENTOS DE MEDICAMENTO</h3>
+            <h3 style='font-size:11px; margin:2px 0 0 0; color:#003366;'>
                 <strong>" . strtoupper($medicamento->nombre) . "</strong>
             </h3>
-            <h4 style='font-size:11px; margin:2px 0 0 0; color:#003366;'>
+            <h4 style='font-size:10px; margin:1px 0 0 0; color:#003366;'>
                 PERÍODO: $desdeFormat &nbsp;–&nbsp; $hastaFormat
             </h4>
         </td>
         <td style='width:15%; text-align:right;'>
-            <img src='$logoalcaldia' style='max-width:60px; height:auto;'>
+
         </td>
     </tr>
 </table>
 <hr style='border:none; border-top:2px solid #003366; margin:0;'>
 ";
-
         $mpdf->WriteHTML($header, 2);
 
-        // *** SECCIÓN ENTRADAS ***
-        $seccionEntradas = "
-<br>
-<table style='width:100%; border-collapse:collapse;'>
-    <tr style='background-color:#003366; color:#ffffff;'>
-        <td colspan='9' style='font-size:11px; font-weight:bold; padding:4px 6px;'>
+        // ══════════════════════════════════════════
+        // SECCIÓN ENTRADAS — header de tabla
+        // ══════════════════════════════════════════
+        $entradasHeader = "
+<table style='width:100%; border-collapse:collapse; margin-top:6px;'>
+    <tr style='background-color:#888888; color:#ffffff;'>
+        <td colspan='9' style='font-size:10px; font-weight:bold; padding:3px 5px;'>
             ENTRADAS DE MEDICAMENTO &nbsp;|&nbsp; Total unidades: $totalEntradas
         </td>
     </tr>
-    <tr style='background-color:#cce0ff;'>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>FECHA</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>N° FACTURA</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>PROVEEDOR</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>FUENTE</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>LOTE</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>FECHA VEN.</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>CANTIDAD</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>COSTO</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>COSTO DONA.</td>
+    <tr style='background-color:#ddd;'>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>FECHA</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>N° FACTURA</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>PROVEEDOR</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>FUENTE</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>LOTE</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>FECHA VEN.</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>CANTIDAD</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>COSTO</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>COSTO DONA.</td>
     </tr>";
+        $mpdf->WriteHTML($entradasHeader, 2);
 
-        if($entradas->isEmpty()){
-            $seccionEntradas .= "<tr><td colspan='9' style='font-size:9px; padding:3px; text-align:center;'>Sin entradas en el período</td></tr>";
+        // *** Filas de entradas en chunks ***
+        $chunkSize = 40;
+        $chunk = '';
+        $filasEnChunk = 0;
+
+        if ($entradas->isEmpty()) {
+            $mpdf->WriteHTML("<tr><td colspan='9' style='font-size:9px; padding:3px; text-align:center;'>Sin entradas en el período</td></tr>", 2);
         } else {
-            foreach($entradas as $e){
-                $fechaE    = date('d-m-Y', strtotime($e->fecha));
+            foreach ($entradas as $e) {
+                $fechaE = date('d-m-Y', strtotime($e->fecha));
                 $fechaVenE = date('d-m-Y', strtotime($e->fecha_vencimiento));
-                $costoE    = '$' . number_format((float)$e->precio, 2, '.', ',');
-                $costoDonaE= '$' . number_format((float)$e->precio_donacion, 2, '.', ',');
+                $costoE = '$' . number_format((float)$e->precio, 2, '.', ',');
+                $costoDonaE = '$' . number_format((float)$e->precio_donacion, 2, '.', ',');
 
-                $seccionEntradas .= "<tr>
-            <td style='font-size:8px; padding:1px 2px;'>$fechaE</td>
-            <td style='font-size:8px; padding:1px 2px;'>$e->numero_factura</td>
-            <td style='font-size:8px; padding:1px 2px;'>$e->proveedor</td>
-            <td style='font-size:8px; padding:1px 2px;'>$e->fuente</td>
-            <td style='font-size:8px; padding:1px 2px;'>$e->lote</td>
-            <td style='font-size:8px; padding:1px 2px;'>$fechaVenE</td>
-            <td style='font-size:8px; padding:1px 2px;'>$e->cantidad_entrada</td>
-            <td style='font-size:8px; padding:1px 2px;'>$costoE</td>
-            <td style='font-size:8px; padding:1px 2px;'>$costoDonaE</td>
-        </tr>";
+                $chunk .= "
+<tr>
+    <td style='font-size:8px; padding:1px 3px;'>$fechaE</td>
+    <td style='font-size:8px; padding:1px 3px;'>$e->numero_factura</td>
+    <td style='font-size:8px; padding:1px 3px;'>$e->proveedor</td>
+    <td style='font-size:8px; padding:1px 3px;'>$e->fuente</td>
+    <td style='font-size:8px; padding:1px 3px;'>$e->lote</td>
+    <td style='font-size:8px; padding:1px 3px;'>$fechaVenE</td>
+    <td style='font-size:8px; padding:1px 3px; text-align:center;'>$e->cantidad_entrada</td>
+    <td style='font-size:8px; padding:1px 3px;'>$costoE</td>
+    <td style='font-size:8px; padding:1px 3px;'>$costoDonaE</td>
+</tr>";
+
+                $filasEnChunk++;
+                if ($filasEnChunk >= $chunkSize) {
+                    $mpdf->WriteHTML($chunk, 2);
+                    $chunk = '';
+                    $filasEnChunk = 0;
+                }
+            }
+            if ($chunk !== '') {
+                $mpdf->WriteHTML($chunk, 2);
             }
         }
 
-        $seccionEntradas .= "</table>";
-        $mpdf->WriteHTML($seccionEntradas, 2);
+        $mpdf->WriteHTML("</table>", 2);
 
-        // *** SECCIÓN SALIDAS POR RECETA ***
-        $seccionRecetas = "
-<br>
-<table style='width:100%; border-collapse:collapse;'>
-    <tr style='background-color:#003366; color:#ffffff;'>
-        <td colspan='7' style='font-size:11px; font-weight:bold; padding:4px 6px;'>
-            SALIDAS POR RECETA &nbsp;|&nbsp; Total unidades: $totalSalidasReceta
+        // ══════════════════════════════════════════
+        // SECCIÓN SALIDAS — header de tabla
+        // ══════════════════════════════════════════
+        $salidasHeader = "
+<table style='width:100%; border-collapse:collapse; margin-top:6px;'>
+    <tr style='background-color:#888888; color:#ffffff;'>
+        <td colspan='6' style='font-size:10px; font-weight:bold; padding:3px 5px;'>
+            SALIDAS &nbsp;|&nbsp; Total: $totalSalidas &nbsp;(Receta: $totalSalidasReceta &nbsp;/&nbsp; Manual: $totalSalidasManual)
         </td>
     </tr>
-    <tr style='background-color:#cce0ff;'>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>FECHA</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>N° RECETA</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>USUARIO</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>LOTE</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>CANTIDAD</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>COSTO UNIT.</td>
-        <td style='font-weight:bold; font-size:9px; padding:2px;'>NOTAS</td>
+    <tr style='background-color:#ddd;'>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>FECHA</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>TIPO</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>N° RECETA</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>USUARIO</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>LOTE</td>
+        <td style='font-weight:bold; font-size:9px; padding:2px 3px; text-decoration:none; border:none;'>CANTIDAD</td>
     </tr>";
+        $mpdf->WriteHTML($salidasHeader, 2);
 
-        if($salidasReceta->isEmpty()){
-            $seccionRecetas .= "<tr><td colspan='7' style='font-size:9px; padding:3px; text-align:center;'>Sin salidas por receta en el período</td></tr>";
+        // *** Filas de salidas en chunks ***
+        $chunk = '';
+        $filasEnChunk = 0;
+
+        if ($salidas->isEmpty()) {
+            $mpdf->WriteHTML("<tr><td colspan='6' style='font-size:9px; padding:3px; text-align:center;'>Sin salidas en el período</td></tr>", 2);
         } else {
-            foreach($salidasReceta as $sr){
-                $fechaSR  = date('d-m-Y H:i', strtotime($sr->fecha));
-                $costoSR  = '$' . number_format((float)$sr->precio, 2, '.', ',');
+            foreach ($salidas as $s) {
+                $fechaS = date('d-m-Y H:i', strtotime($s->fecha));
+                $costoS = '$' . number_format((float)$s->precio, 2, '.', ',');
 
-                $seccionRecetas .= "<tr>
-            <td style='font-size:8px; padding:1px 2px;'>$fechaSR</td>
-            <td style='font-size:8px; padding:1px 2px;'># $sr->id_receta</td>
-            <td style='font-size:8px; padding:1px 2px;'>$sr->usuario</td>
-            <td style='font-size:8px; padding:1px 2px;'>$sr->lote</td>
-            <td style='font-size:8px; padding:1px 2px;'>$sr->cantidad_salida</td>
-            <td style='font-size:8px; padding:1px 2px;'>$costoSR</td>
-            <td style='font-size:8px; padding:1px 2px;'>$sr->notas</td>
-        </tr>";
+                if ($s->tipo_salida === 'manual') {
+                    $tipoBadge = "<span style='color:#e67e22; font-size:8px; font-weight:bold;'>MANUAL</span>";
+                    $numReceta = '—';
+                } else {
+                    $tipoBadge = "<span style='color:#333; font-size:8px; font-weight:bold;'>RECETA</span>";
+                    $numReceta = $s->id_receta ? '# ' . $s->id_receta : '—';
+                }
+
+                $chunk .= "
+<tr>
+    <td style='font-size:8px; padding:1px 3px;'>$fechaS</td>
+    <td style='font-size:8px; padding:1px 3px; text-align:center;'>$tipoBadge</td>
+    <td style='font-size:8px; padding:1px 3px; text-align:center;'>$numReceta</td>
+    <td style='font-size:8px; padding:1px 3px;'>$s->usuario</td>
+    <td style='font-size:8px; padding:1px 3px;'>$s->lote</td>
+    <td style='font-size:8px; padding:1px 3px; text-align:center;'>$s->cantidad_salida</td>
+</tr>";
+
+                $filasEnChunk++;
+                if ($filasEnChunk >= $chunkSize) {
+                    $mpdf->WriteHTML($chunk, 2);
+                    $chunk = '';
+                    $filasEnChunk = 0;
+                }
+            }
+            if ($chunk !== '') {
+                $mpdf->WriteHTML($chunk, 2);
             }
         }
 
-        $seccionRecetas .= "</table>";
-        $mpdf->WriteHTML($seccionRecetas, 2);
+        $mpdf->WriteHTML("</table>", 2);
 
-        // *** RESUMEN FINAL ***
+        // ══════════════════════════════════════════
+        // RESUMEN FINAL
+        // ══════════════════════════════════════════
         $resumen = "
-<br>
-<table style='border-collapse:collapse;' border='1' width='300'>
-    <tr style='background-color:#003366; color:#ffffff;'>
-        <td style='font-weight:bold; font-size:10px; padding:3px;'>Total Entradas</td>
-        <td style='font-weight:bold; font-size:10px; padding:3px;'>Total Salidas Receta</td>
-        <td style='font-weight:bold; font-size:10px; padding:3px;'>Total Salidas</td>
+<table style='border-collapse:collapse; margin-top:6px;' border='1' width='420'>
+    <tr style='background-color:#888888; color:#ffffff;'>
+        <td style='font-weight:bold; font-size:10px; padding:3px 5px;'>Total Entradas</td>
+        <td style='font-weight:bold; font-size:10px; padding:3px 5px;'>Salidas Receta</td>
+        <td style='font-weight:bold; font-size:10px; padding:3px 5px;'>Salidas Manual</td>
+        <td style='font-weight:bold; font-size:10px; padding:3px 5px;'>Total Salidas</td>
+        <td style='font-weight:bold; font-size:10px; padding:3px 5px;'>Existencia</td>
     </tr>
     <tr>
-        <td style='font-size:10px; padding:3px; font-weight:bold;'>$totalEntradas</td>
-        <td style='font-size:10px; padding:3px; font-weight:bold;'>$totalSalidasReceta</td>
-        <td style='font-size:10px; padding:3px; font-weight:bold;'>$totalSalidas</td>
+        <td style='font-size:10px; padding:3px 5px; font-weight:bold; text-align:center;'>$totalEntradas</td>
+        <td style='font-size:10px; padding:3px 5px; font-weight:bold; text-align:center;'>$totalSalidasReceta</td>
+        <td style='font-size:10px; padding:3px 5px; font-weight:bold; text-align:center;'>$totalSalidasManual</td>
+        <td style='font-size:10px; padding:3px 5px; font-weight:bold; text-align:center;'>$totalSalidas</td>
+        <td style='font-size:10px; padding:3px 5px; font-weight:bold; text-align:center;'>$existenciaFinal</td>
     </tr>
 </table>
-<br><br>";
+";
 
         $mpdf->WriteHTML($resumen, 2);
         $mpdf->Output();
     }
-
 
 }
