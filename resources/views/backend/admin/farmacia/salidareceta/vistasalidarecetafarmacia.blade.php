@@ -121,6 +121,9 @@
             color: var(--os-gray);
         }
 
+        .os-btn-success { background: var(--os-green); color: #fff; }
+        .os-btn-success:hover { filter: brightness(1.08); color: #fff; }
+
         #select-estado { font-weight: 600; }
     </style>
 
@@ -155,6 +158,14 @@
                         <label class="os-label">Fecha hasta</label>
                         <input type="date" class="form-control" id="fecha-fin"
                                autocomplete="off" onchange="verificarEstado()">
+                    </div>
+
+                    {{-- Dentro de .os-filters, después del grupo "Fecha hasta" --}}
+                    <div class="os-filter-group">
+                        <label class="os-label" style="visibility:hidden;">Acción</label>
+                        <button type="button" class="os-btn os-btn-success" onclick="imprimirTodosPDF()">
+                            <i class="fas fa-file-pdf"></i> Imprimir PDF
+                        </button>
                     </div>
 
                 </div>
@@ -360,5 +371,29 @@
                 })
                 .catch(function () { closeLoading(); toastr.error('Información no encontrada'); });
         }
+
+
+        /* ── Imprimir todas las recetas en PDF ── */
+        function imprimirTodosPDF() {
+            const estado      = document.getElementById('select-estado').value;
+            const fechainicio = document.getElementById('fecha-inicio').value;
+            const fechafin    = document.getElementById('fecha-fin').value;
+
+            if (!fechainicio || !fechafin) {
+                toastr.error('Ambas fechas son requeridas para generar el PDF');
+                return;
+            }
+
+            if (new Date(fechainicio) > new Date(fechafin)) {
+                toastr.error('La fecha de inicio no puede ser mayor que la fecha fin');
+                return;
+            }
+
+            const url = "{{ url('/admin/reporte/receta/paciente-bloque') }}/"
+                + estado + "/" + fechainicio + "/" + fechafin;
+
+            window.open(url, '_blank');
+        }
+
     </script>
 @endsection

@@ -370,6 +370,8 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/pdf/reporte/finalv2/{desde}/{hasta}/{soloExistencia?}', [ReportesController::class, 'generarReporteFinalv2'])->name('admin.pdf.reporte.finalv2');
     Route::get('/admin/pdf/movimientos/{id}/{desde?}/{hasta?}', [ReportesController::class, 'movimientosMedicamento'])->name('admin.pdf.movimientos');
 
+    Route::get('/admin/reporte/receta/paciente-bloque/{idestado}/{desde}/{hasta}', [ReportesController::class,'reporteRecetaPacientePorFechasTodos']);
+
 
 
 }); // end auth

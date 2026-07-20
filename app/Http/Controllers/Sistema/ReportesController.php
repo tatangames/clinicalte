@@ -1059,4 +1059,201 @@ class ReportesController extends Controller
         $mpdf->Output();
     }
 
+
+
+
+
+
+
+    public function reporteRecetaPacientePorFechasTodos($estado, $desde, $hasta)
+    {
+        // ---------- Aumentar límite de PCRE como red de seguridad ----------
+        ini_set('pcre.backtrack_limit', '10000000');
+
+        // ---------- Validación de fechas en servidor ----------
+        try {
+            $start = Carbon::parse($desde)->startOfDay();
+            $end   = Carbon::parse($hasta)->endOfDay();
+        } catch (\Throwable $e) {
+            abort(400, 'Fechas inválidas.');
+        }
+
+        if ($start->gt($end)) {
+            abort(400, 'La fecha de inicio no puede ser mayor que la fecha fin.');
+        }
+
+        // ---------- Construcción del dataset según estado ----------
+        if ($estado == '1') {
+            $recetas = Receta::where('estado', 1)
+                ->orderBy('fecha', 'ASC')
+                ->get();
+        } elseif ($estado == '2') {
+            $recetas = Receta::where('estado', 2)
+                ->whereBetween('fecha', [$start, $end])
+                ->orderBy('fecha', 'ASC')
+                ->get();
+        } else { // estado == 3 (u otros valores caen aquí)
+            $recetas = Receta::where('estado', 3)
+                ->whereBetween('fecha', [$start, $end])
+                ->orderBy('fecha', 'ASC')
+                ->get();
+        }
+
+        // ---------- Instanciar mPDF ----------
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => sys_get_temp_dir(), 'format' => 'LETTER']);
+
+        $mpdf->showImageErrors = false;
+        $mpdf->SetTitle('Recetas por bloque');
+
+        // Cargar CSS (ajusta la ruta si difiere)
+        if (file_exists(public_path('css/cssreceta.css'))) {
+            $stylesheet = file_get_contents(public_path('css/cssreceta.css'));
+            $mpdf->WriteHTML($stylesheet, \Mpdf\HTMLParserMode::HEADER_CSS);
+        }
+
+        switch ((string)$estado) {
+            case '1':
+                $tituloEstado = 'PENDIENTES';
+                break;
+            case '2':
+                $tituloEstado = 'PROCESADAS';
+                break;
+            case '3':
+                $tituloEstado = 'ANULADAS';
+                break;
+            default:
+                $tituloEstado = 'ESTADO DESCONOCIDO';
+                break;
+        }
+
+        $rango = $start->format('d-m-Y').' al '.$end->format('d-m-Y');
+
+        // ---------- Generar una página por receta ----------
+        $total = $recetas->count();
+        if ($total === 0) {
+            $htmlVacio = "
+            <div class='contenedorp'>
+                <h3 style='text-align:center;margin-top:10px'>No se encontraron recetas</h3>
+                <p style='text-align:center'>Estado: <b>{$tituloEstado}</b> &middot; Rango: <b>{$rango}</b></p>
+            </div>";
+            $mpdf->WriteHTML($htmlVacio, \Mpdf\HTMLParserMode::HTML_BODY);
+            return $mpdf->Output('recetas-'.$desde.'_'.$hasta.'.pdf', 'I');
+        }
+
+        // ── Ruta directa del logo (sin base64) ──
+        $logoAlcaldia = public_path('images/logojpg.jpg');
+        $logoExiste   = file_exists($logoAlcaldia);
+
+        foreach ($recetas as $idx => $receta) {
+            $paciente = Paciente::find($receta->id_paciente);
+            $nombrePaciente = $paciente ? trim(($paciente->nombres ?? '').' '.($paciente->apellidos ?? '')) : 'N/D';
+            $edad = $paciente && $paciente->fecha_nacimiento ? Carbon::parse($paciente->fecha_nacimiento)->age : 'N/D';
+
+            $fechaReceta    = $receta->fecha        ? Carbon::parse($receta->fecha)->format('d-m-Y')        : '';
+            $fechaProxCita  = $receta->proxima_cita ? Carbon::parse($receta->proxima_cita)->format('d-m-Y') : '';
+
+            $detalles = DB::table('recetas_detalle AS deta')
+                ->join('entrada_medicamento_detalle AS enta', 'deta.id_entrada_detalle', '=', 'enta.id')
+                ->join('farmacia_articulo AS fa', 'fa.id', '=', 'enta.id_medicamento')
+                ->select('fa.nombre', 'deta.id_recetas', 'deta.cantidad', 'deta.descripcion', 'deta.id_via')
+                ->where('deta.id_recetas', $receta->id)
+                ->orderBy('fa.nombre', 'ASC')
+                ->get();
+
+            foreach ($detalles as $d) {
+                $via = ViaReceta::find($d->id_via);
+                $d->nombreVia = $via ? $via->nombre : '';
+            }
+
+            // ── Header de página (logo por ruta directa, no base64) ──
+            $top = "
+    <table style='width:100%;border-collapse:collapse;margin-bottom:0px'>
+        <tr>
+            <td style='width:15%;text-align:left;'>"
+                .($logoExiste ? "<img src='{$logoAlcaldia}' alt='Santa Ana Norte' style='max-width:100px;height:auto;'>" : "")."
+            </td>
+            <td style='width:60%;text-align:center;'>
+                <h1 style='font-size:16px;margin:0;color:#003366;'>ALCALDÍA MUNICIPAL DE SANTA ANA NORTE</h1>
+                <h3 style='font-size:16px;margin:0;color:#003366;'>Clinica Municipal Cristobal Peraza</h3>
+            </td>
+        </tr>
+    </table>
+    <hr style='border:none;border-top:2px solid #003366;margin:0;'>
+    <div style='text-align:center;margin:6px 0 10px'>
+        <span style='font-size:13px'><b>Estado:</b> {$tituloEstado} &nbsp;&middot;&nbsp; <b>Rango:</b> {$rango}</span>
+    </div>
+    <table width='100%'>
+        <tr>
+            <td style='text-align:left;width:33%'>
+                <p style='font-size:12px'><strong>Paciente:</strong> {$nombrePaciente}</p>
+            </td>
+            <td style='text-align:center;width:34%'>
+                <p style='font-size:12px'><strong>Edad:</strong> {$edad}</p>
+            </td>
+            <td style='text-align:right;width:33%'>
+                <p style='font-size:12px'><strong>Fecha:</strong> {$fechaReceta}</p>
+            </td>
+        </tr>";
+
+            if (!empty($fechaProxCita)) {
+                $top .= "
+        <tr>
+            <td style='width:33%'><p style='font-size:12px'>&nbsp;</p></td>
+            <td style='width:34%'><p style='font-size:12px'>&nbsp;</p></td>
+            <td style='text-align:right;width:33%'>
+                <p style='font-size:12px'><strong>Próxima Consulta:</strong> {$fechaProxCita}</p>
+            </td>
+        </tr>";
+            }
+
+            $top .= "</table><hr>";
+
+            // ── Escribir header de esta página ──
+            $mpdf->WriteHTML($top, \Mpdf\HTMLParserMode::HTML_BODY);
+
+            // ── Escribir cada medicamento por separado ──
+            $vueltas = 0;
+            foreach ($detalles as $dato) {
+                $vueltas++;
+                $marginTop = $vueltas === 1 ? '0' : '20';
+
+                $chunk = "
+        <table width='100%' style='margin-top:{$marginTop}px;line-height:1'>
+            <tr>
+                <td style='text-align:left;width:33%'>
+                    <p style='font-size:11px'><strong><ul><li>{$dato->nombre}</li></ul></strong></p>
+                </td>
+                <td style='text-align:center;width:34%'>
+                    <p style='font-size:11px'><strong>Cantidad:</strong> {$dato->cantidad}</p>
+                </td>
+                <td style='text-align:right;width:33%'>
+                    <p style='font-size:11px'><strong>Vía:</strong> {$dato->nombreVia}</p>
+                </td>
+            </tr>
+        </table>
+        <p style='font-size:12px;line-height:1.2;margin-top:4px'>
+            <strong>Indicaciones del Medicamento:</strong><br>
+            {$dato->descripcion}
+        </p>";
+
+                $mpdf->WriteHTML($chunk, \Mpdf\HTMLParserMode::HTML_BODY);
+            }
+
+            $mpdf->setFooter("Página {PAGENO} de {nb}");
+
+            if ($idx < $total - 1) {
+                $mpdf->WriteHTML("<pagebreak />", \Mpdf\HTMLParserMode::HTML_BODY);
+            }
+        }
+
+        // ---------- Salida ----------
+        return $mpdf->Output('recetas-'.$desde.'_'.$hasta.'.pdf', 'I');
+    }
+
+
+
+
+
+
+
 }
