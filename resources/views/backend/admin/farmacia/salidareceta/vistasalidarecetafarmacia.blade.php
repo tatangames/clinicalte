@@ -341,36 +341,7 @@
                 .catch(function () { closeLoading(); toastr.error('Información no encontrada'); });
         }
 
-        /* ── Retornar paciente a sala ── */
-        function retornarPaciente(id) {
-            Swal.fire({
-                title: '¿Retornar paciente?',
-                text: 'El paciente regresará a dentro de sala.',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#1a8a5a',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, retornar',
-                cancelButtonText: 'Cancelar',
-                allowOutsideClick: false
-            }).then(function (result) {
-                if (result.isConfirmed) retornarPacienteSala(id);
-            });
-        }
 
-        function retornarPacienteSala(id) {
-            openLoading();
-            axios.post(urlAdmin + '/admin/paciente/retonarsala', { id: id })
-                .then(function (response) {
-                    closeLoading();
-                    if (response.data.success === 1) {
-                        location.reload();
-                    } else {
-                        toastr.error('Información no encontrada');
-                    }
-                })
-                .catch(function () { closeLoading(); toastr.error('Información no encontrada'); });
-        }
 
 
         /* ── Imprimir todas las recetas en PDF ── */

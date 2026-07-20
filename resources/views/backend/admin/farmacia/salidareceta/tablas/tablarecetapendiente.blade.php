@@ -66,16 +66,6 @@
                             <i class="fas fa-check"></i> Procesar
                         </button>
 
-                        @if($dato->btnRetornar == 1)
-                            <button type="button"
-                                    class="btn btn-dark btn-xs"
-                                    style="color:white;"
-                                    onclick="retornarPaciente({{ $dato->id }})"
-                                    title="Retornar paciente a sala">
-                                <i class="fas fa-undo"></i> Retornar
-                            </button>
-                        @endif
-
                         <button type="button"
                                 class="btn btn-danger btn-xs"
                                 style="color:white;"
