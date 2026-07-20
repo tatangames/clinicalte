@@ -53,8 +53,6 @@ class SalidaRecetaController extends Controller
         return view('backend.admin.farmacia.salidareceta.vistasalidarecetafarmacia');
     }
 
-
-
     public function tablaSalidaFarmaciaPorReceta($estado, $desde, $hasta){
 
         if($estado == '1'){

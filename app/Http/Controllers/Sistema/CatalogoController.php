@@ -23,7 +23,7 @@ class CatalogoController extends Controller
 {
     public function indexCatalogo()
     {
-        return view('backend.admin.farmacia.catalogo.vistaCatalogo');
+        return view('backend.admin.farmacia.catalogo.vistacatalogo');
     }
 
     public function tablaCatalogo()
