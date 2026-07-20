@@ -75,10 +75,19 @@
 <script>
     $(function () {
         $.fn.dataTable.ext.type.order['date-dmy-pre'] = function (d) {
+            if (!d || d === '') return 0;
             var p = d.split('-');
-            return p[2] + p[1] + p[0];
+            // reconstruye como YYYYMMDD para ordenar numéricamente
+            return parseInt(p[2] + p[1] + p[0], 10);
         };
-        initDataTable('#tableRecetasDt', { columnDefs: [{ type: 'date-dmy', targets: 0 }] });
+
+        initDataTable('#tableRecetasDt', {
+            columnDefs: [
+                { type: 'date-dmy', targets: 0, orderable: true },
+                { orderable: false, targets: [4] }  // columna Opciones no ordena
+            ],
+            order: [[0, 'desc']]  // más reciente primero por defecto
+        });
     });
 
     function imprimirRecetaMedica(idreceta) {
