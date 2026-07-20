@@ -8,32 +8,28 @@ use Illuminate\Support\Facades\Auth;
 
 class ControlController extends Controller
 {
-    public function indexRedireccionamiento(){
+    public function indexRedireccionamiento()
+    {
         $user = Auth::user();
 
         // ADMINISTRADOR
-        if($user->hasRole('admin')){
+        if ($user->hasRole('admin')) {
             return redirect()->route('admin.roles.index');
-        }
-
-        // Inventario
-        else if($user->hasRole('archivo')){
+        } // Inventario
+        else if ($user->hasRole('archivo')) {
             return redirect()->route('admin.asignaciones.index');
-        }
-
-        // Enfermeria
-        else if($user->hasRole('enfermeria')){
+        } // Enfermeria
+        else if ($user->hasRole('enfermeria')) {
             return redirect()->route('admin.asignaciones.index');
-        }
-
-        // Doctora
-        else if($user->hasRole('doctora')){
+        } // Doctora
+        else if ($user->hasRole('doctora')) {
             return redirect()->route('admin.asignaciones.index');
-        }
-
-        // Farmacia
-        else if($user->hasRole('farmacia')){
+        } // Farmacia
+        else if ($user->hasRole('farmacia')) {
             return redirect()->route('admin.salida.recetas.farmacia.index');
+        } // Reportes
+        else if($user->hasRole('reportes')){
+            return redirect()->route('admin.reportes.general.index');
         }
 
         return redirect()->route('no.permisos.index');

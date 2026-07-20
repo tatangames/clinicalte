@@ -463,12 +463,10 @@ return [
 
             ],
         ],
-
-
         [
             'text'    => 'Historial',
             'icon'    => 'fas fa-pen-alt',
-            'can'     => 'sidebar.reportes',
+            'can'     => 'sidebar.farmacia',
             'submenu' => [
                 [
                     'text' => 'Entradas',
@@ -478,7 +476,6 @@ return [
 
             ],
         ],
-
         [
             'text'    => 'Reportes',
             'icon'    => 'fas fa-pen-alt',
