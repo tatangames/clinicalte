@@ -373,7 +373,10 @@ class HistorialClinicoController extends Controller
         }
 
         // ✅ query directa, sin depender de la colección
-        $existeReceta = Receta::where('id_consulta', (int) $idconsulta)->exists() ? 1 : 0;
+        // ✅ Después — no cuenta las denegadas (estado 3)
+        $existeReceta = Receta::where('id_consulta', (int) $idconsulta)
+            ->whereIn('estado', [1, 2])
+            ->exists() ? 1 : 0;
 
         return view('backend.admin.historialclinico.bloques.bloquerecetas',
             compact('arrayRecetas', 'existeReceta'));
