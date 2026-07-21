@@ -11,6 +11,7 @@
                                 <th style="width: 20%">Nombre</th>
                                 <th style="width: 10%">Línea</th>
                                 <th style="width: 10%">Sub Línea</th>
+                                <th style="width: 8%">Existencia</th>
                                 <th style="width: 6%">Opciones</th>
                             </tr>
                             </thead>
@@ -22,6 +23,11 @@
                                     <td>{{ $dato->nombre }}</td>
                                     <td>{{ $dato->linea?->nombre }}</td>
                                     <td>{{ $dato->subLinea?->nombre }}</td>
+                                    <td class="text-center">
+                                        <span class="badge {{ $dato->existencia > 0 ? 'badge-success' : 'badge-danger' }}">
+                                            {{ $dato->existencia }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <button type="button" class="btn btn-primary btn-xs" onclick="infoEditar({{ $dato->id }})">
                                             <i class="fas fa-eye" title="Editar"></i>&nbsp; Editar
@@ -38,5 +44,3 @@
         </div>
     </div>
 </section>
-
-

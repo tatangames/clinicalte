@@ -28,10 +28,33 @@ class CatalogoController extends Controller
 
     public function tablaCatalogo()
     {
+        // Calcular stock por medicamento
+        $stockPorMedicamento = EntradaMedicamentoDetalle::select(
+            'id_medicamento',
+            DB::raw('SUM(cantidad_fija) as total_entrada'),
+            DB::raw('SUM(COALESCE((
+            SELECT SUM(srd.cantidad)
+            FROM salida_receta_detalle srd
+            WHERE srd.id_entrada_detalle = entrada_medicamento_detalle.id
+        ), 0)) as total_salida')
+        )
+            ->groupBy('id_medicamento')
+            ->get()
+            ->mapWithKeys(function ($row) {
+                return [
+                    $row->id_medicamento => $row->total_entrada - $row->total_salida
+                ];
+            });
+
         $arrayCatalogo = FarmaciaArticulo::with('linea')
             ->with('subLinea')
             ->orderBy('nombre')
             ->get();
+
+        // Agregar existencia a cada artículo
+        foreach ($arrayCatalogo as $articulo) {
+            $articulo->existencia = $stockPorMedicamento[$articulo->id] ?? 0;
+        }
 
         return view('backend.admin.farmacia.catalogo.tablacatalogo', compact('arrayCatalogo'));
     }
