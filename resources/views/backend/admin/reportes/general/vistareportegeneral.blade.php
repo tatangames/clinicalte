@@ -334,49 +334,46 @@
                         </div>
                     </div>
 
-
+                    {{-- TARJETA 3: MOVIMIENTOS POR MEDICAMENTO --}}
+                    <div class="reporte-card green">
+                        <div class="reporte-card-header">
+                            <div class="header-left">
+                                <div class="card-icon"><i class="fas fa-exchange-alt"></i></div>
+                                <h5>Movimientos por Medicamento</h5>
+                            </div>
+                        </div>
+                        <div class="reporte-card-body">
+                            <p>Detalle de entradas y salidas por receta de un medicamento específico. El rango de fechas es opcional.</p>
+                            <div class="reporte-fields">
+                                <div class="field-row">
+                                    <div class="field-item">
+                                        <label>Medicamento <span class="required-star">*</span></label>
+                                        <select class="select2" id="mov-medicamento" style="width:100%">
+                                            <option value="">-- Seleccione --</option>
+                                            @foreach($materiales as $m)
+                                                <option value="{{ $m->id }}">{{ $m->nombre }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="field-row">
+                                    <div class="field-item">
+                                        <label>Desde (opcional)</label>
+                                        <input type="date" autocomplete="off" id="mov-desde">
+                                    </div>
+                                    <div class="field-item">
+                                        <label>Hasta (opcional)</label>
+                                        <input type="date" autocomplete="off" id="mov-hasta">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="reporteMovimientosMedicamento()" class="btn-generar">
+                                <i class="fas fa-file-pdf"></i> Generar PDF
+                            </button>
+                        </div>
+                    </div>
 
                 </div>{{-- /.reportes-grid --}}
-
-                {{-- TARJETA 3: MOVIMIENTOS POR MEDICAMENTO --}}
-                <div class="reporte-card green">
-                    <div class="reporte-card-header">
-                        <div class="header-left">
-                            <div class="card-icon"><i class="fas fa-exchange-alt"></i></div>
-                            <h5>Movimientos por Medicamento</h5>
-                        </div>
-                    </div>
-                    <div class="reporte-card-body">
-                        <p>Detalle de entradas y salidas por receta de un medicamento específico. El rango de fechas es opcional.</p>
-                        <div class="reporte-fields">
-                            <div class="field-row">
-                                <div class="field-item" style="min-width: 220px;">
-                                    <label>Medicamento <span class="required-star">*</span></label>
-                                    <select class="select2" id="mov-medicamento" style="width:100%">
-                                        <option value="">-- Seleccione --</option>
-                                        @foreach($materiales as $m)
-                                            <option value="{{ $m->id }}">{{ $m->nombre }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="field-row">
-                                <div class="field-item">
-                                    <label>Desde (opcional)</label>
-                                    <input type="date" autocomplete="off" id="mov-desde">
-                                </div>
-                                <div class="field-item">
-                                    <label>Hasta (opcional)</label>
-                                    <input type="date" autocomplete="off" id="mov-hasta">
-                                </div>
-                            </div>
-                        </div>
-                        <button type="button" onclick="reporteMovimientosMedicamento()" class="btn-generar">
-                            <i class="fas fa-file-pdf"></i> Generar PDF
-                        </button>
-                    </div>
-                </div>
-
 
             </div>
         </section>
