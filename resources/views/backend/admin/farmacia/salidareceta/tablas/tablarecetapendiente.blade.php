@@ -37,16 +37,18 @@
             <thead style="background:#f8f9fa;">
             <tr>
                 <th style="width:10%;">Fecha receta</th>
-                <th style="width:20%;">Paciente</th>
-                <th style="width:20%;">Recetado por</th>
+                <th style="width:18%;">Paciente</th>
+                <th style="width:12%;">DUI</th>
+                <th style="width:18%;">Recetado por</th>
                 <th style="width:10%; text-align:center;">Opciones</th>
             </tr>
             </thead>
             <tbody>
             @forelse($arrayRecetas as $dato)
                 <tr>
-                    <td>{{ $dato->fechaFormat }}</td>
+                    <td data-order="{{ $dato->fecha }}">{{ $dato->fechaFormat }}</td>
                     <td>{{ $dato->nombrepaciente }}</td>
+                    <td>{{ $dato->duipaciente }}</td>
                     <td>{{ $dato->doctor }}</td>
                     <td style="text-align:center; white-space:nowrap;">
 
@@ -90,8 +92,7 @@
     $(function () {
         $("#tabla").DataTable(dtConfig({
             columnDefs: [
-                { type: 'date-euro', targets: 0 },
-                { orderable: false, targets: 3 }
+                { orderable: false, targets: 4 }
             ]
         }));
     });

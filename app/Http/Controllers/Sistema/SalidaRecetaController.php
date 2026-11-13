@@ -53,13 +53,39 @@ class SalidaRecetaController extends Controller
         return view('backend.admin.farmacia.salidareceta.vistasalidarecetafarmacia');
     }
 
-    public function tablaSalidaFarmaciaPorReceta($estado, $desde, $hasta){
+    public function tablaSalidaFarmaciaPorReceta(Request $request, $estado, $desde, $hasta){
+
+        // Obtener IDs de pacientes si se busca por número de documento
+        $idsPacienteDUI = null;
+        if ($request->filled('dui')) {
+            $docOriginal = $request->dui;
+            $docLimpio = str_replace(['-', ' '], '', $docOriginal);
+
+            $idsPacienteDUI = Paciente::where(function ($q) use ($docOriginal, $docLimpio) {
+                $q->where('num_documento', 'like', '%' . $docOriginal . '%')
+                  ->orWhereRaw("REPLACE(REPLACE(num_documento, '-', ''), ' ', '') LIKE ?", ['%' . $docLimpio . '%']);
+            })
+                ->pluck('id')
+                ->toArray();
+        }
+
+        // Parsear fechas opcionales (solo desde, solo hasta, ambas, o ninguna)
+        $start = ($desde !== '-') ? Carbon::parse($desde)->startOfDay() : null;
+        $end   = ($hasta !== '-') ? Carbon::parse($hasta)->endOfDay()   : null;
 
         if($estado == '1'){
 
-            $arrayRecetas = Receta::where('estado', 1)
-                ->orderBy('fecha', 'ASC')
-                ->get();
+            $query = Receta::where('estado', 1)
+                ->orderBy('fecha', 'ASC');
+
+            if ($start) { $query->where('fecha', '>=', $start); }
+            if ($end)   { $query->where('fecha', '<=', $end); }
+
+            if ($idsPacienteDUI !== null) {
+                $query->whereIn('id_paciente', $idsPacienteDUI);
+            }
+
+            $arrayRecetas = $query->get();
 
             foreach ($arrayRecetas as $info){
 
@@ -68,6 +94,7 @@ class SalidaRecetaController extends Controller
                 $infoPaciente = Paciente::where('id', $info->id_paciente)->first();
 
                 $info->nombrepaciente = $info->nombres . " " . $infoPaciente->apellidos;
+                $info->duipaciente = $infoPaciente->num_documento ?? '';
 
                 $infoUsuario = Usuario::where('id', $info->id_usuario)->first();
                 $info->doctor = $infoUsuario->nombre;
@@ -90,15 +117,18 @@ class SalidaRecetaController extends Controller
 
         }else if($estado == '2'){
 
-            $start = Carbon::parse($desde)->startOfDay();
-            $end = Carbon::parse($hasta)->endOfDay();
-
             // PROCESADOS
+            $query = Receta::where('estado', 2)
+                ->orderBy('fecha', 'ASC');
 
-            $arrayRecetas = Receta::where('estado', 2)
-                ->whereBetween('fecha', [$start, $end])
-                ->orderBy('fecha', 'ASC')
-                ->get();
+            if ($start) { $query->where('fecha', '>=', $start); }
+            if ($end)   { $query->where('fecha', '<=', $end); }
+
+            if ($idsPacienteDUI !== null) {
+                $query->whereIn('id_paciente', $idsPacienteDUI);
+            }
+
+            $arrayRecetas = $query->get();
 
             foreach ($arrayRecetas as $info){
 
@@ -114,6 +144,7 @@ class SalidaRecetaController extends Controller
                 $infoPaciente = Paciente::where('id', $info->id_paciente)->first();
 
                 $info->nombrepaciente = $infoPaciente->nombres . " " . $infoPaciente->apellidos;
+                $info->duipaciente = $infoPaciente->num_documento ?? '';
 
                 $infoUsuario = Usuario::where('id', $info->id_usuario)->first();
                 $info->doctor = $infoUsuario->nombre;
@@ -123,13 +154,17 @@ class SalidaRecetaController extends Controller
 
         }else{
 
-            $start = Carbon::parse($desde)->startOfDay();
-            $end = Carbon::parse($hasta)->endOfDay();
+            $query = Receta::where('estado', 3)
+                ->orderBy('fecha', 'ASC');
 
-            $arrayRecetas = Receta::where('estado', 3)
-                ->whereBetween('fecha', [$start, $end])
-                ->orderBy('fecha', 'ASC')
-                ->get();
+            if ($start) { $query->where('fecha', '>=', $start); }
+            if ($end)   { $query->where('fecha', '<=', $end); }
+
+            if ($idsPacienteDUI !== null) {
+                $query->whereIn('id_paciente', $idsPacienteDUI);
+            }
+
+            $arrayRecetas = $query->get();
 
             foreach ($arrayRecetas as $info){
 
@@ -140,6 +175,7 @@ class SalidaRecetaController extends Controller
                 $infoPaciente = Paciente::where('id', $info->id_paciente)->first();
 
                 $info->nombrepaciente = $info->nombres . " " . $infoPaciente->apellidos;
+                $info->duipaciente = $infoPaciente->num_documento ?? '';
 
                 $infoUsuario = Usuario::where('id', $info->id_usuario)->first();
                 $info->nombreuser = $infoUsuario->nombre;

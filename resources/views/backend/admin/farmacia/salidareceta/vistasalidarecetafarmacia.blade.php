@@ -104,6 +104,8 @@
         .os-btn:active { transform: scale(.97); }
         .os-btn-danger { background: var(--os-red); color: #fff; }
         .os-btn-danger:hover { filter: brightness(1.08); color: #fff; }
+        .os-btn-primary { background: var(--os-blue); color: #fff; }
+        .os-btn-primary:hover { filter: brightness(1.08); color: #fff; }
         .os-btn-dark   { background: #6c757d; color: #fff; }
         .os-btn-dark:hover   { filter: brightness(1.08); color: #fff; }
 
@@ -141,7 +143,7 @@
                     <div class="os-filter-group">
                         <label class="os-label">Estado</label>
                         <select class="form-control" id="select-estado"
-                                style="min-width:140px;" onchange="verificarEstado()">
+                                style="min-width:140px;">
                             <option value="1">⏳ Pendiente</option>
                             <option value="2">✅ Procesado</option>
                             <option value="3">🚫 Denegado</option>
@@ -151,16 +153,34 @@
                     <div class="os-filter-group">
                         <label class="os-label">Fecha desde</label>
                         <input type="date" class="form-control" id="fecha-inicio"
-                               autocomplete="off" onchange="verificarEstado()">
+                               autocomplete="off">
                     </div>
 
                     <div class="os-filter-group">
                         <label class="os-label">Fecha hasta</label>
                         <input type="date" class="form-control" id="fecha-fin"
-                               autocomplete="off" onchange="verificarEstado()">
+                               autocomplete="off">
                     </div>
 
-                    {{-- Dentro de .os-filters, después del grupo "Fecha hasta" --}}
+                    {{-- Campo de búsqueda por Nº Documento --}}
+                    <div class="os-filter-group">
+                        <label class="os-label">Nº Documento</label>
+                        <div class="input-group" style="min-width:200px;">
+                            <input type="text" class="form-control" id="input-dui"
+                                   autocomplete="off" placeholder="Buscar por documento..."
+                                   onkeydown="if(event.key==='Enter'){event.preventDefault();verificarEstado();}">
+                        </div>
+                    </div>
+
+                    {{-- Botón Filtrar --}}
+                    <div class="os-filter-group">
+                        <label class="os-label" style="visibility:hidden;">Filtrar</label>
+                        <button type="button" class="os-btn os-btn-primary" onclick="verificarEstado()">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                    </div>
+
+                    {{-- Botón Imprimir PDF --}}
                     <div class="os-filter-group">
                         <label class="os-label" style="visibility:hidden;">Acción</label>
                         <button type="button" class="os-btn os-btn-success" onclick="imprimirTodosPDF()">
@@ -246,28 +266,32 @@
             );
         });
 
-        /* ── Cargar tabla según filtros ── */
+        /* ── Cargar tabla según filtros (Botón Filtrar / Enter) ── */
         function verificarEstado() {
             var estado      = document.getElementById('select-estado').value;
             var fechainicio = document.getElementById('fecha-inicio').value;
             var fechafin    = document.getElementById('fecha-fin').value;
+            var doc         = document.getElementById('input-dui').value.trim();
 
-            if (!fechainicio || !fechafin) {
-                document.getElementById('tablaDatatable').innerHTML = '';
-                return;
-            }
-
-            if (new Date(fechainicio) > new Date(fechafin)) {
+            if (fechainicio && fechafin && new Date(fechainicio) > new Date(fechafin)) {
                 toastr.error('La fecha de inicio no puede ser mayor que la fecha fin');
                 return;
             }
 
             openLoading();
-            $('#tablaDatatable').load(
-                "{{ URL::to('/admin/salida/medicamento/porreceta/tabla') }}/"
-                + estado + "/" + fechainicio + "/" + fechafin
-            );
+            var fi = fechainicio || '-';
+            var ff = fechafin || '-';
+            var url = "{{ URL::to('/admin/salida/medicamento/porreceta/tabla') }}/"
+                + estado + "/" + fi + "/" + ff;
+
+            if (doc) {
+                url += "?dui=" + encodeURIComponent(doc);
+            }
+
+            $('#tablaDatatable').load(url);
         }
+
+        var buscarPorDUI = verificarEstado;
 
         /* ── Procesar receta ── */
         function procesarRecetaMedica(idreceta) {
@@ -350,18 +374,16 @@
             const fechainicio = document.getElementById('fecha-inicio').value;
             const fechafin    = document.getElementById('fecha-fin').value;
 
-            if (!fechainicio || !fechafin) {
-                toastr.error('Ambas fechas son requeridas para generar el PDF');
-                return;
-            }
-
-            if (new Date(fechainicio) > new Date(fechafin)) {
+            if (fechainicio && fechafin && new Date(fechainicio) > new Date(fechafin)) {
                 toastr.error('La fecha de inicio no puede ser mayor que la fecha fin');
                 return;
             }
 
+            var fi = fechainicio || '-';
+            var ff = fechafin || '-';
+
             const url = "{{ url('/admin/reporte/receta/paciente-bloque') }}/"
-                + estado + "/" + fechainicio + "/" + fechafin;
+                + estado + "/" + fi + "/" + ff;
 
             window.open(url, '_blank');
         }

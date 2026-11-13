@@ -1070,34 +1070,43 @@ class ReportesController extends Controller
         // ---------- Aumentar límite de PCRE como red de seguridad ----------
         ini_set('pcre.backtrack_limit', '10000000');
 
-        // ---------- Validación de fechas en servidor ----------
-        try {
-            $start = Carbon::parse($desde)->startOfDay();
-            $end   = Carbon::parse($hasta)->endOfDay();
-        } catch (\Throwable $e) {
-            abort(400, 'Fechas inválidas.');
+        // ---------- Fechas opcionales ----------
+        $start = null;
+        $end   = null;
+
+        if ($desde !== '-') {
+            try {
+                $start = Carbon::parse($desde)->startOfDay();
+            } catch (\Throwable $e) {
+                abort(400, 'Fecha desde inválida.');
+            }
         }
 
-        if ($start->gt($end)) {
+        if ($hasta !== '-') {
+            try {
+                $end = Carbon::parse($hasta)->endOfDay();
+            } catch (\Throwable $e) {
+                abort(400, 'Fecha hasta inválida.');
+            }
+        }
+
+        if ($start && $end && $start->gt($end)) {
             abort(400, 'La fecha de inicio no puede ser mayor que la fecha fin.');
         }
 
         // ---------- Construcción del dataset según estado ----------
         if ($estado == '1') {
-            $recetas = Receta::where('estado', 1)
-                ->orderBy('fecha', 'ASC')
-                ->get();
+            $query = Receta::where('estado', 1)->orderBy('fecha', 'ASC');
         } elseif ($estado == '2') {
-            $recetas = Receta::where('estado', 2)
-                ->whereBetween('fecha', [$start, $end])
-                ->orderBy('fecha', 'ASC')
-                ->get();
+            $query = Receta::where('estado', 2)->orderBy('fecha', 'ASC');
         } else { // estado == 3 (u otros valores caen aquí)
-            $recetas = Receta::where('estado', 3)
-                ->whereBetween('fecha', [$start, $end])
-                ->orderBy('fecha', 'ASC')
-                ->get();
+            $query = Receta::where('estado', 3)->orderBy('fecha', 'ASC');
         }
+
+        if ($start) { $query->where('fecha', '>=', $start); }
+        if ($end)   { $query->where('fecha', '<=', $end); }
+
+        $recetas = $query->get();
 
         // ---------- Instanciar mPDF ----------
         $mpdf = new \Mpdf\Mpdf(['tempDir' => sys_get_temp_dir(), 'format' => 'LETTER']);
@@ -1126,7 +1135,15 @@ class ReportesController extends Controller
                 break;
         }
 
-        $rango = $start->format('d-m-Y').' al '.$end->format('d-m-Y');
+        if ($start && $end) {
+            $rango = $start->format('d-m-Y').' al '.$end->format('d-m-Y');
+        } elseif ($start) {
+            $rango = 'Desde ' . $start->format('d-m-Y');
+        } elseif ($end) {
+            $rango = 'Hasta ' . $end->format('d-m-Y');
+        } else {
+            $rango = 'Todas las fechas';
+        }
 
         // ---------- Generar una página por receta ----------
         $total = $recetas->count();
