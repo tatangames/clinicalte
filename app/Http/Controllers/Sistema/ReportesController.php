@@ -412,27 +412,31 @@ class ReportesController extends Controller
 
         // *** IDs salida_receta RANGO desde-hasta (para ENTREGADO TOTAL) ***
         $pilaIdSalidaRecetaRango = DB::table('salida_receta AS sr')
+            ->leftJoin('recetas AS r', 'r.id', '=', 'sr.id_recetas')
             ->where(function ($query) use ($start, $end) {
-                $query->whereIn('sr.id_recetas', function ($sub) {
-                    $sub->select('id')->from('recetas')->where('estado', 2);
-                })
-                    ->orWhere('sr.tipo_salida', 'manual');
+                $query->where(function ($q) use ($start, $end) {
+                    $q->where('r.estado', 2)
+                      ->whereBetween('r.fecha', [$start->toDateString(), $end->toDateString()]);
+                })->orWhere(function ($q) use ($start, $end) {
+                    $q->where('sr.tipo_salida', 'manual')
+                      ->whereBetween('sr.fecha', [$start, $end]);
+                });
             })
-            ->whereBetween('sr.fecha', [$start, $end])
             ->pluck('sr.id')
             ->toArray();
 
         // *** IDs salida_receta ACUMULADO hasta "hasta" (para ENTREGADO) ***
         $pilaIdSalidaRecetaHasta = DB::table('salida_receta AS sr')
+            ->leftJoin('recetas AS r', 'r.id', '=', 'sr.id_recetas')
             ->where(function ($query) use ($end) {
-                // Salidas con receta (estado=2)
-                $query->whereIn('sr.id_recetas', function ($sub) {
-                    $sub->select('id')->from('recetas')->where('estado', 2);
-                })
-                    // O salidas manuales (sin receta)
-                    ->orWhere('sr.tipo_salida', 'manual');
+                $query->where(function ($q) use ($end) {
+                    $q->where('r.estado', 2)
+                      ->where('r.fecha', '<=', $end->toDateString());
+                })->orWhere(function ($q) use ($end) {
+                    $q->where('sr.tipo_salida', 'manual')
+                      ->where('sr.fecha', '<=', $end);
+                });
             })
-            ->where('sr.fecha', '<=', $end)
             ->pluck('sr.id')
             ->toArray();
 
@@ -794,6 +798,12 @@ class ReportesController extends Controller
             ->when($start && $end, function ($q) use ($start, $end) {
                 $q->whereBetween('em.fecha', [$start, $end]);
             })
+            ->when($start && !$end, function ($q) use ($start) {
+                $q->where('em.fecha', '>=', $start);
+            })
+            ->when(!$start && $end, function ($q) use ($end) {
+                $q->where('em.fecha', '<=', $end);
+            })
             ->select(
                 'em.fecha',
                 'em.numero_factura',
@@ -822,10 +832,41 @@ class ReportesController extends Controller
                 })->orWhere('sr.tipo_salida', 'manual');
             })
             ->when($start && $end, function ($q) use ($start, $end) {
-                $q->whereBetween('sr.fecha', [$start, $end]);
+                $q->where(function ($sub) use ($start, $end) {
+                    $sub->where(function ($q1) use ($start, $end) {
+                        $q1->where('sr.tipo_salida', 'receta')
+                           ->whereBetween('r.fecha', [$start->toDateString(), $end->toDateString()]);
+                    })->orWhere(function ($q2) use ($start, $end) {
+                        $q2->where('sr.tipo_salida', 'manual')
+                           ->whereBetween('sr.fecha', [$start, $end]);
+                    });
+                });
+            })
+            ->when($start && !$end, function ($q) use ($start) {
+                $q->where(function ($sub) use ($start) {
+                    $sub->where(function ($q1) use ($start) {
+                        $q1->where('sr.tipo_salida', 'receta')
+                           ->where('r.fecha', '>=', $start->toDateString());
+                    })->orWhere(function ($q2) use ($start) {
+                        $q2->where('sr.tipo_salida', 'manual')
+                           ->where('sr.fecha', '>=', $start);
+                    });
+                });
+            })
+            ->when(!$start && $end, function ($q) use ($end) {
+                $q->where(function ($sub) use ($end) {
+                    $sub->where(function ($q1) use ($end) {
+                        $q1->where('sr.tipo_salida', 'receta')
+                           ->where('r.fecha', '<=', $end->toDateString());
+                    })->orWhere(function ($q2) use ($end) {
+                        $q2->where('sr.tipo_salida', 'manual')
+                           ->where('sr.fecha', '<=', $end);
+                    });
+                });
             })
             ->select(
                 'sr.fecha',
+                'r.fecha AS fecha_receta',
                 'sr.tipo_salida',
                 'r.id AS id_receta',
                 'u.nombre AS usuario',
@@ -835,15 +876,50 @@ class ReportesController extends Controller
                 'emd.precio_donacion',
                 'sr.notas'
             )
+            ->orderBy(DB::raw("CASE WHEN sr.tipo_salida = 'receta' AND r.fecha IS NOT NULL THEN r.fecha ELSE DATE(sr.fecha) END"), 'ASC')
             ->orderBy('sr.fecha', 'ASC')
             ->get();
 
-        // *** TOTALES ***
+        // *** TOTALES DEL PERÍODO ***
         $totalEntradas = $entradas->sum('cantidad_entrada');
         $totalSalidas = $salidas->sum('cantidad_salida');
         $totalSalidasReceta = $salidas->where('tipo_salida', 'receta')->sum('cantidad_salida');
         $totalSalidasManual = $salidas->where('tipo_salida', 'manual')->sum('cantidad_salida');
-        $existenciaFinal = $totalEntradas - $totalSalidas;
+
+        // *** EXISTENCIA REAL ACUMULADA A LA FECHA DE CORTE ***
+        $entradasHastaCorte = DB::table('entrada_medicamento_detalle AS emd')
+            ->join('entrada_medicamento AS em', 'em.id', '=', 'emd.id_entrada_medicamento')
+            ->where('emd.id_medicamento', $id)
+            ->when($end, function ($q) use ($end) {
+                $q->where('em.fecha', '<=', $end);
+            })
+            ->sum('emd.cantidad_fija');
+
+        $salidasHastaCorte = DB::table('salida_receta_detalle AS srd')
+            ->join('salida_receta AS sr', 'sr.id', '=', 'srd.id_salidareceta')
+            ->join('entrada_medicamento_detalle AS emd', 'emd.id', '=', 'srd.id_entrada_detalle')
+            ->leftJoin('recetas AS r', 'r.id', '=', 'sr.id_recetas')
+            ->where('emd.id_medicamento', $id)
+            ->where(function ($query) {
+                $query->where(function ($q) {
+                    $q->where('sr.tipo_salida', 'receta')
+                        ->where('r.estado', 2);
+                })->orWhere('sr.tipo_salida', 'manual');
+            })
+            ->when($end, function ($q) use ($end) {
+                $q->where(function ($sub) use ($end) {
+                    $sub->where(function ($q1) use ($end) {
+                        $q1->where('sr.tipo_salida', 'receta')
+                           ->where('r.fecha', '<=', $end->toDateString());
+                    })->orWhere(function ($q2) use ($end) {
+                        $q2->where('sr.tipo_salida', 'manual')
+                           ->where('sr.fecha', '<=', $end);
+                    });
+                });
+            })
+            ->sum('srd.cantidad');
+
+        $existenciaFinal = $entradasHastaCorte - $salidasHastaCorte;
 
         // *** mPDF ***
         $mpdf = new \Mpdf\Mpdf([
@@ -998,7 +1074,12 @@ class ReportesController extends Controller
             $mpdf->WriteHTML("<tr><td colspan='6' style='font-size:9px; padding:3px; text-align:center;'>Sin salidas en el período</td></tr>", 2);
         } else {
             foreach ($salidas as $s) {
-                $fechaS = date('d-m-Y H:i', strtotime($s->fecha));
+                if ($s->tipo_salida === 'receta' && $s->fecha_receta) {
+                    $hora = date('H:i', strtotime($s->fecha));
+                    $fechaS = date('d-m-Y', strtotime($s->fecha_receta)) . ' ' . $hora;
+                } else {
+                    $fechaS = date('d-m-Y H:i', strtotime($s->fecha));
+                }
                 $costoS = '$' . number_format((float)$s->precio, 2, '.', ',');
 
                 if ($s->tipo_salida === 'manual') {
