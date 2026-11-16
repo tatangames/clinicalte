@@ -234,7 +234,6 @@ class ReportesController extends Controller
     }
 
 
-
     // Controlador
     public function borrarReceta(Request $request)
     {
@@ -254,13 +253,16 @@ class ReportesController extends Controller
     }
 
 
-
     public function indexReportesGeneral()
     {
         $materiales = FarmaciaArticulo::orderBy('nombre', 'ASC')->get();
 
         return view('backend.admin.reportes.general.vistareportegeneral', compact('materiales'));
     }
+
+
+
+
 
 
     public function generarPdfExistencias(Request $request)
@@ -279,24 +281,32 @@ class ReportesController extends Controller
         $fechaFormat   = \Carbon\Carbon::now('America/El_Salvador')->format('d-m-Y');
         $soloConStock  = $request->query('soloConStock', '1');
 
-        // ── Existencias ──────────────────────────────────────────────────
+        // ── Existencias y valor (a nivel de cada entrada_detalle) ────────────
+        $subSalidasPorEntrada = DB::table('salida_receta_detalle')
+            ->select('id_entrada_detalle', DB::raw('SUM(cantidad) AS total_salido'))
+            ->groupBy('id_entrada_detalle');
+
+        // Si precio = 0 (ej. donaciones) se usa precio_donacion
+        $subStock = DB::table('entrada_medicamento_detalle as emd')
+            ->leftJoinSub($subSalidasPorEntrada, 'sd', 'sd.id_entrada_detalle', '=', 'emd.id')
+            ->select(
+                'emd.id_medicamento',
+                DB::raw('SUM(emd.cantidad_fija - COALESCE(sd.total_salido, 0)) AS existencia'),
+                DB::raw('SUM(
+                (emd.cantidad_fija - COALESCE(sd.total_salido, 0))
+                * (CASE WHEN emd.precio > 0 THEN emd.precio ELSE emd.precio_donacion END)
+            ) AS valor')
+            )
+            ->groupBy('emd.id_medicamento');
+
         $query = DB::table('farmacia_articulo as fa')
-            ->leftJoinSub(
-                DB::table('entrada_medicamento_detalle')
-                    ->select('id_medicamento', DB::raw('SUM(cantidad_fija) as total_ingresado'))
-                    ->groupBy('id_medicamento'),
-                'ed', 'ed.id_medicamento', '=', 'fa.id'
-            )
-            ->leftJoinSub(
-                DB::table('salida_receta_detalle as srd')
-                    ->join('entrada_medicamento_detalle as emd', 'emd.id', '=', 'srd.id_entrada_detalle')
-                    ->select('emd.id_medicamento', DB::raw('SUM(srd.cantidad) as total_salido'))
-                    ->groupBy('emd.id_medicamento'),
-                'sd', 'sd.id_medicamento', '=', 'fa.id'
-            )
+            ->leftJoinSub($subStock, 'st', 'st.id_medicamento', '=', 'fa.id')
+            ->leftJoin('objeto_especifico as oe', 'oe.id', '=', 'fa.id_objespecifico')
             ->select(
                 'fa.nombre as material',
-                DB::raw('(COALESCE(ed.total_ingresado, 0) - COALESCE(sd.total_salido, 0)) as existencia')
+                'oe.codigo as objespec',
+                DB::raw('COALESCE(st.existencia, 0) AS existencia'),
+                DB::raw('COALESCE(st.valor, 0) AS valor')
             )
             ->orderBy('fa.nombre');
 
@@ -350,38 +360,134 @@ class ReportesController extends Controller
 ";
         } else {
 
+            $thStyle = "background:#f2f4f8; color:#000; font-size:9px; font-weight:bold;
+                    border:1px solid #000; padding:5px 3px; text-align:center;";
+
             $tabla .= "
 <table width='100%' style='border-collapse:collapse; font-family:Arial, sans-serif; margin-top:8px;'>
     <thead>
         <tr>
-            <th style='background:#f2f4f8; color:#000; font-size:9px; font-weight:bold;
-                        border:1px solid #000; padding:5px 3px; text-align:center; width:5%;'>#</th>
-            <th style='background:#f2f4f8; color:#000; font-size:9px; font-weight:bold;
-                        border:1px solid #000; padding:5px 3px; text-align:center; width:75%;'>Medicamento</th>
-            <th style='background:#f2f4f8; color:#000; font-size:9px; font-weight:bold;
-                        border:1px solid #000; padding:5px 3px; text-align:center; width:20%;'>Existencia</th>
+            <th style='{$thStyle} width:5%;'>#</th>
+            <th style='{$thStyle} width:10%;'>Obj. Espec.</th>
+            <th style='{$thStyle} width:39%;'>Medicamento</th>
+            <th style='{$thStyle} width:12%;'>Existencia</th>
+            <th style='{$thStyle} width:17%;'>Precio Unit.</th>
+            <th style='{$thStyle} width:17%;'>Total</th>
         </tr>
     </thead>
     <tbody>
 ";
 
-            $cont = 1;
+            $cont         = 1;
+            $totalGeneral = 0;
+            $porObjeto    = []; // [codigo => ['articulos' => n, 'valor' => x]]
 
             foreach ($existencias as $item) {
                 $existencia = (int) $item->existencia;
+                $valor      = (float) $item->valor;
+                $precioU    = $existencia > 0 ? $valor / $existencia : 0;
+
+                $totalGeneral += $valor;
+
+                // Acumular por objeto específico
+                $codObj = trim((string) ($item->objespec ?? '')) !== ''
+                    ? $item->objespec
+                    : 'SIN OBJETO ESPECÍFICO';
+
+                if (!isset($porObjeto[$codObj])) {
+                    $porObjeto[$codObj] = ['articulos' => 0, 'valor' => 0];
+                }
+                $porObjeto[$codObj]['articulos']++;
+                $porObjeto[$codObj]['valor'] += $valor;
+
+                // Código a mostrar en la fila ("—" si no tiene)
+                $objFila = trim((string) ($item->objespec ?? '')) !== ''
+                    ? e($item->objespec)
+                    : '—';
+
+                $precioFmt = '$' . number_format($precioU, 4);
+                $totalFmt  = '$' . number_format($valor, 2);
+                $nombre    = e($item->material);
 
                 $tabla .= "
     <tr>
         <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:center;'>{$cont}</td>
-        <td style='border:1px solid #000; font-size:9px; padding:4px;'>{$item->material}</td>
+        <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:center;'>{$objFila}</td>
+        <td style='border:1px solid #000; font-size:9px; padding:4px;'>{$nombre}</td>
         <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:center;'>{$existencia}</td>
+        <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:right;'>{$precioFmt}</td>
+        <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:right; font-weight:bold;'>{$totalFmt}</td>
     </tr>
     ";
                 $cont++;
             }
 
+            $totalGeneralFmt = '$' . number_format($totalGeneral, 2);
+
             $tabla .= "
     </tbody>
+    <tfoot>
+        <tr>
+            <td colspan='5' style='border:1px solid #000; font-size:10px; padding:5px;
+                                   text-align:right; font-weight:bold; background:#f2f4f8;'>TOTAL GENERAL</td>
+            <td style='border:1px solid #000; font-size:10px; padding:5px;
+                       text-align:right; font-weight:bold; background:#f2f4f8;'>{$totalGeneralFmt}</td>
+        </tr>
+    </tfoot>
+</table>
+";
+
+            // ── Resumen por objeto específico (código ascendente, "SIN..." al final) ──
+            uksort($porObjeto, function ($a, $b) {
+                $aSin = ($a === 'SIN OBJETO ESPECÍFICO');
+                $bSin = ($b === 'SIN OBJETO ESPECÍFICO');
+                if ($aSin !== $bSin) {
+                    return $aSin ? 1 : -1;
+                }
+                return strcmp((string) $a, (string) $b);
+            });
+
+            $tabla .= "
+<div style='font-family:Arial, sans-serif; font-size:11px; font-weight:bold; margin-top:18px; margin-bottom:4px;'>
+    RESUMEN POR OBJETO ESPECÍFICO
+</div>
+<table width='100%' style='border-collapse:collapse; font-family:Arial, sans-serif; page-break-inside:avoid;'>
+    <thead>
+        <tr>
+            <th style='{$thStyle} width:60%;'>Objeto Específico</th>
+            <th style='{$thStyle} width:15%;'>Artículos</th>
+            <th style='{$thStyle} width:25%;'>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+";
+
+            $totalArticulos = 0;
+
+            foreach ($porObjeto as $codigo => $d) {
+                $totalArticulos += $d['articulos'];
+
+                $tabla .= "
+        <tr>
+            <td style='border:1px solid #000; font-size:9px; padding:4px;'>" . e($codigo) . "</td>
+            <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:center;'>{$d['articulos']}</td>
+            <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:right; font-weight:bold;'>$" . number_format($d['valor'], 2) . "</td>
+        </tr>
+        ";
+            }
+
+            $tabla .= "
+    </tbody>
+    <tfoot>
+        <tr>
+            <td style='border:1px solid #000; font-size:10px; padding:5px; text-align:right;
+                       font-weight:bold; background:#f2f4f8;'>TOTAL</td>
+            <td style='border:1px solid #000; font-size:10px; padding:5px; text-align:center;
+                       font-weight:bold; background:#f2f4f8;'>{$totalArticulos}</td>
+            <td style='border:1px solid #000; font-size:10px; padding:5px; text-align:right;
+                       font-weight:bold; background:#f2f4f8;'>{$totalGeneralFmt}</td>
+        </tr>
+    </tfoot>
 </table>
 ";
         }
@@ -393,6 +499,9 @@ class ReportesController extends Controller
         $mpdf->WriteHTML($tabla, 2);
         $mpdf->Output();
     }
+
+
+
 
 
 
