@@ -264,7 +264,6 @@ class ReportesController extends Controller
 
 
 
-
     public function generarPdfExistencias(Request $request)
     {
         $mpdf = new \Mpdf\Mpdf([
@@ -280,6 +279,7 @@ class ReportesController extends Controller
         $logoalcaldia  = public_path('images/logo.png');
         $fechaFormat   = \Carbon\Carbon::now('America/El_Salvador')->format('d-m-Y');
         $soloConStock  = $request->query('soloConStock', '1');
+        $conteo        = $request->query('conteo', '0') === '1'; // columnas de conteo físico
 
         // ── Existencias y valor (a nivel de cada entrada_detalle) ────────────
         $subSalidasPorEntrada = DB::table('salida_receta_detalle')
@@ -363,16 +363,31 @@ class ReportesController extends Controller
             $thStyle = "background:#f2f4f8; color:#000; font-size:9px; font-weight:bold;
                     border:1px solid #000; padding:5px 3px; text-align:center;";
 
+            // Anchos según si lleva columnas de conteo físico (ambos suman 100%)
+            // Con conteo: 84% + 2 columnas de 8% = 100%
+            $w = $conteo
+                ? ['n' => 4, 'obj' => 9, 'med' => 37, 'ex' => 10, 'pu' => 12, 'tot' => 12]
+                : ['n' => 5, 'obj' => 10, 'med' => 39, 'ex' => 12, 'pu' => 17, 'tot' => 17];
+
+            $thFisicas = $conteo
+                ? "<th style='{$thStyle} width:8%;'>Conteo Físico</th>
+               <th style='{$thStyle} width:8%;'>Diferencia</th>"
+                : '';
+
+            // Si hay conteo, la columna del sistema se llama "Stock Sistema"
+            $tituloExistencia = $conteo ? 'Stock Sistema' : 'Existencia';
+
             $tabla .= "
 <table width='100%' style='border-collapse:collapse; font-family:Arial, sans-serif; margin-top:8px;'>
     <thead>
         <tr>
-            <th style='{$thStyle} width:5%;'>#</th>
-            <th style='{$thStyle} width:10%;'>Obj. Espec.</th>
-            <th style='{$thStyle} width:39%;'>Medicamento</th>
-            <th style='{$thStyle} width:12%;'>Existencia</th>
-            <th style='{$thStyle} width:17%;'>Precio Unit.</th>
-            <th style='{$thStyle} width:17%;'>Total</th>
+            <th style='{$thStyle} width:{$w['n']}%;'>#</th>
+            <th style='{$thStyle} width:{$w['obj']}%;'>Obj. Espec.</th>
+            <th style='{$thStyle} width:{$w['med']}%;'>Medicamento</th>
+            <th style='{$thStyle} width:{$w['ex']}%;'>{$tituloExistencia}</th>
+            <th style='{$thStyle} width:{$w['pu']}%;'>Precio Unit.</th>
+            <th style='{$thStyle} width:{$w['tot']}%;'>Total</th>
+            {$thFisicas}
         </tr>
     </thead>
     <tbody>
@@ -409,6 +424,14 @@ class ReportesController extends Controller
                 $totalFmt  = '$' . number_format($valor, 2);
                 $nombre    = e($item->material);
 
+                // Celdas de conteo físico (Conteo y Diferencia en blanco para llenar a mano)
+                $celdasFisicas = '';
+                if ($conteo) {
+                    $celdasFisicas = "
+        <td style='border:1px solid #000; font-size:9px; padding:4px; height:22px;'></td>
+        <td style='border:1px solid #000; font-size:9px; padding:4px; height:22px;'></td>";
+                }
+
                 $tabla .= "
     <tr>
         <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:center;'>{$cont}</td>
@@ -417,12 +440,18 @@ class ReportesController extends Controller
         <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:center;'>{$existencia}</td>
         <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:right;'>{$precioFmt}</td>
         <td style='border:1px solid #000; font-size:9px; padding:4px; text-align:right; font-weight:bold;'>{$totalFmt}</td>
+        {$celdasFisicas}
     </tr>
     ";
                 $cont++;
             }
 
             $totalGeneralFmt = '$' . number_format($totalGeneral, 2);
+
+            // Celda de relleno en el pie cuando hay columnas de conteo (2 columnas)
+            $tfootExtra = $conteo
+                ? "<td colspan='2' style='border:1px solid #000; background:#f2f4f8;'></td>"
+                : '';
 
             $tabla .= "
     </tbody>
@@ -432,6 +461,7 @@ class ReportesController extends Controller
                                    text-align:right; font-weight:bold; background:#f2f4f8;'>TOTAL GENERAL</td>
             <td style='border:1px solid #000; font-size:10px; padding:5px;
                        text-align:right; font-weight:bold; background:#f2f4f8;'>{$totalGeneralFmt}</td>
+            {$tfootExtra}
         </tr>
     </tfoot>
 </table>
@@ -499,6 +529,7 @@ class ReportesController extends Controller
         $mpdf->WriteHTML($tabla, 2);
         $mpdf->Output();
     }
+
 
 
 

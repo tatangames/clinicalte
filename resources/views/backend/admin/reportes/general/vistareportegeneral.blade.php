@@ -247,6 +247,49 @@
             color: #475569;
         }
 
+        /* ── Toggle conteo físico (tarjeta 1) ── */
+        .reporte-fields label.toggle-conteo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: #f8fafc;
+            margin: 0;
+            text-transform: none;
+            letter-spacing: 0;
+            transition: border-color .15s;
+        }
+        .toggle-conteo:hover { border-color: #3b82f6; }
+        .toggle-conteo input { display: none; }
+        .toggle-conteo .switch {
+            position: relative;
+            width: 38px; height: 20px;
+            background: #cbd5e1;
+            border-radius: 20px;
+            flex-shrink: 0;
+            transition: background .15s;
+        }
+        .toggle-conteo .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px; left: 2px;
+            width: 16px; height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform .15s;
+        }
+        .toggle-conteo input:checked + .switch { background: #2563eb; }
+        .toggle-conteo input:checked + .switch::after { transform: translateX(18px); }
+        .toggle-conteo .toggle-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+        }
+
         .divider { border-color: #e2e8f0; margin: 14px 0; }
 
         @media (max-width: 768px) {
@@ -282,6 +325,15 @@
                                             <option value="1">Solo con stock disponible (> 0)</option>
                                             <option value="0">Todos los medicamentos</option>
                                         </select>
+                                    </div>
+                                </div>
+                                <div class="field-row">
+                                    <div class="field-item">
+                                        <label class="toggle-conteo">
+                                            <input type="checkbox" id="toggle-conteo">
+                                            <span class="switch"></span>
+                                            <span class="toggle-label">Agregar Stock Físico, Conteo Físico y Diferencia</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -400,7 +452,8 @@
         /* ── Tarjeta 1: Inventario actual ── */
         function pdfExistencias() {
             var filtro = document.getElementById('select-filtro-existencia').value;
-            window.open(urlAdmin + '/admin/existencia/pdf/generar?soloConStock=' + filtro);
+            var conteo = document.getElementById('toggle-conteo').checked ? '1' : '0';
+            window.open(urlAdmin + '/admin/existencia/pdf/generar?soloConStock=' + filtro + '&conteo=' + conteo);
         }
 
         /* ── Tarjeta 2: Reporte por fechas (checkbox personalizado) ── */
